@@ -33,6 +33,8 @@ What you get on day one:
 
 ## Live showcase
 
+![Design system showcase — every component, state, and icon on one scrollable screen](docs/screenshots/showcase.png)
+
 Open `Assets/DesignSystem/Resources/UI/Styles/DesignSystem/DesignSystemShowcase.uxml` in the UI Builder or attach it to a `UIDocument`. Every component, every state, every icon — one screen, scrollable.
 
 ```
