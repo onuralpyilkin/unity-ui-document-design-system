@@ -178,7 +178,11 @@
     border-width: 0;
 }
 .ds-slider .unity-base-slider__dragger {
-    background-color: #FFFFFF;
+    /* Thumb uses a token instead of literal #FFFFFF so the dragger inverts
+       cleanly between themes — invisible-on-white was the previous failure
+       mode. text-primary is dark on light backgrounds, off-white on dark,
+       which gives consistent contrast against the surface-elev track. */
+    background-color: var(--color-text-primary);
     border-radius: var(--radius-pill-9); /* 18×18 thumb → circle */
     width: 18px;
     height: 18px;
@@ -242,7 +246,10 @@
 }
 .ds-range .unity-min-max-slider__min-thumb,
 .ds-range .unity-min-max-slider__max-thumb {
-    background-color: #FFFFFF;
+    /* See `.ds-slider .unity-base-slider__dragger` above — token rather than
+       literal #FFFFFF so both thumbs stay visible against the track in light
+       and dark themes. */
+    background-color: var(--color-text-primary);
     border-radius: var(--radius-pill-9);   /* 18×18 → circle */
     width: 18px;
     height: 18px;
@@ -343,14 +350,23 @@
     margin: 0;
 }
 
-/* Track — invisible. The thumb floats on the page surface itself. */
-.ds-root .unity-base-slider__tracker {
+/* Track — invisible. The thumb floats on the page surface itself.
+   Selectors are scoped to `.ds-root .unity-scroll-view__*-scroller` rather
+   than the looser `.ds-root .unity-base-slider__tracker` so the rule only
+   matches sliders that are CHILDREN of a ScrollView's scroller. The looser
+   form bled into `.ds-slider` and `.ds-range`, painting their tracks
+   transparent and making them invisible. */
+.ds-root .unity-scroll-view__vertical-scroller .unity-base-slider__tracker,
+.ds-root .unity-scroll-view__horizontal-scroller .unity-base-slider__tracker {
     background-color: transparent;
     border-width: 0;
 }
 
-/* Thumb — pill-shaped, themed via tokens so light/dark both look right. */
-.ds-root .unity-base-slider__dragger {
+/* Thumb — pill-shaped, themed via tokens so light/dark both look right.
+   Same scoping fix: the dragger styling for scrollbars must NOT match the
+   regular .ds-slider's dragger (which has its own white-pill thumb). */
+.ds-root .unity-scroll-view__vertical-scroller .unity-base-slider__dragger,
+.ds-root .unity-scroll-view__horizontal-scroller .unity-base-slider__dragger {
     background-color: var(--color-border-strong);
     border-width: 0;
     border-radius: 4px;
@@ -366,6 +382,7 @@
     height: 8px;
     top: 0;
 }
-.ds-root .unity-base-slider__dragger:hover {
+.ds-root .unity-scroll-view__vertical-scroller .unity-base-slider__dragger:hover,
+.ds-root .unity-scroll-view__horizontal-scroller .unity-base-slider__dragger:hover {
     background-color: var(--color-text-secondary);
 }

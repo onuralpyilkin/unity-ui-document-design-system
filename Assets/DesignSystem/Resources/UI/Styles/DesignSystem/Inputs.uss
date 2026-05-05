@@ -274,70 +274,14 @@
 }
 
 /* ---------- Dropdown popup (the menu opened on click) ----------
-   Unity's `BasePopupField` opens a `GenericDropdownMenu` and adds it to
-   `panel.visualTree` — i.e. as a SIBLING of our `.ds-root`, not a child.
-   That means class-scoped selectors like `.ds-root .unity-base-dropdown`
-   would never match. Style the unprefixed Unity class names instead so
-   the popup picks up tokens from the panel-level :root cascade.
-
-   For the .theme-light toggle to reach the popup, ShowcaseBootstrap's
-   WireThemeToggle also adds the class to `panel.visualTree` (otherwise
-   the popup stays dark when the rest of the page flips to light). */
-.unity-base-dropdown {
-    background-color: var(--color-surface-elev);
-    border-color: var(--color-border);
-    border-width: var(--border-thin);
-    border-radius: var(--radius-md);
-    color: var(--color-text-primary);
-    padding: var(--space-1);
-}
-.unity-base-dropdown__container-outer,
-.unity-base-dropdown__container-inner {
-    background-color: rgba(0, 0, 0, 0);
-    border-width: 0;
-}
-.unity-base-dropdown__item {
-    background-color: rgba(0, 0, 0, 0);
-    color: var(--color-text-primary);
-    padding-left: var(--space-3);
-    padding-right: var(--space-3);
-    padding-top: var(--space-2);
-    padding-bottom: var(--space-2);
-    border-radius: var(--radius-sm);
-    min-height: 32px;
-    transition-property: background-color;
-    transition-duration: var(--transition-fast);
-}
-.unity-base-dropdown__item:hover {
-    background-color: var(--color-surface-hover);
-}
-.unity-base-dropdown__item--checked {
-    background-color: var(--color-primary-soft);
-}
-.unity-base-dropdown__item .unity-text-element,
-.unity-base-dropdown__label {
-    color: var(--color-text-primary);
-    font-size: var(--font-size-body-1);
-    -unity-text-align: middle-left;
-}
-
-/* Checkmark on the currently-selected option — same SVG-replaces-PNG
-   trick as the field-arrow above. Unity sets the default theme image
-   which gets soft on HiDPI; we point at our crisp vector check.
-   The `--checked` modifier toggles the image on/off as Unity's default
-   theme does, so unselected items stay blank. */
-.unity-base-dropdown__item-checkmark {
-    width: 14px;
-    height: 14px;
-    margin-right: var(--space-2);
-    flex-shrink: 0;
-    flex-grow: 0;
-    -unity-background-scale-mode: scale-to-fit;
-    -unity-background-image-tint-color: var(--color-primary);
-}
-.unity-base-dropdown__item-checkmark--checked {
-    background-image: resource("Textures/Icons/check");
-}
+   The runtime menu (`unity-base-dropdown__*` classes) is added by Unity's
+   GenericDropdownMenu under `m_TargetElement.GetRootVisualContainer()` —
+   a SIBLING of the UXML rootVisualElement, NOT a descendant. Stylesheets
+   imported via the UXML's `<Style>` tag scope to the rootVisualElement
+   subtree only, so popup rules placed here never reached the popup.
+   The showcase ships popup styling in a separate stylesheet
+   (`Showcase/Resources/ShowcaseDropdownPopup.uss`) loaded at panel-root
+   scope by `ShowcaseBootstrap`. */
 
 /* ---------- Textarea ---------- */
 .ds-textarea {

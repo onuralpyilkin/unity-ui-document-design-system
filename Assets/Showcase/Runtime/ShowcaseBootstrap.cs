@@ -95,12 +95,37 @@ namespace UIDocumentDesignSystem.Showcase
             if (focusRing != null && showcaseDoc.rootVisualElement != null)
                 showcaseDoc.rootVisualElement.styleSheets.Add(focusRing);
 
-            // Mobile flip + promo-button wiring + theme-toggle wiring —
-            // deferred one frame because rootVisualElement isn't built
-            // until UIDocument has had its first OnEnable pass.
+            // Mobile flip + promo-button wiring + theme-toggle wiring +
+            // panel-root popup stylesheet load — all run inside
+            // `schedule.Execute` because `rootVisualElement.parent` isn't
+            // available until UIDocument has attached the document to its
+            // panel during the first OnEnable pass.
+            //
+            // The popup stylesheet is loaded onto `panel.visualTree` (the
+            // parent of rootVisualElement) so it reaches Unity's
+            // GenericDropdownMenu — which is added under
+            // `GetRootVisualContainer()` (verified against
+            // UnityCsReference/Modules/UIElements/Core/Controls/
+            // GenericDropdownMenu.cs) — a SIBLING of rootVisualElement, not
+            // a descendant. Stylesheets imported via the UXML's <Style> tag
+            // scope to rootVisualElement's subtree only, so popup rules
+            // placed there never matched the popup. We pull up ONLY this
+            // small dedicated stylesheet (not the full DesignSystem.uss +
+            // ShowcaseTheme.uss bundle, which had unintended layout effects
+            // on the popup itself when loaded panel-wide).
             showcaseDoc.rootVisualElement?.schedule.Execute(() =>
             {
                 var root = showcaseDoc.rootVisualElement;
+                if (root == null) return;
+
+                var panelRoot = root.parent;
+                if (panelRoot != null)
+                {
+                    var popupChrome = Resources.Load<StyleSheet>("ShowcaseDropdownPopup");
+                    if (popupChrome != null && !panelRoot.styleSheets.Contains(popupChrome))
+                        panelRoot.styleSheets.Add(popupChrome);
+                }
+
                 ApplyMobileClass(root);
                 WirePromoLinks(root);
                 WireThemeToggle(root);
