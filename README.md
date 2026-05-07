@@ -1,6 +1,6 @@
 # Unity UI Toolkit Design System
 
-A drop-in **design system for Unity 6 UI Toolkit** (UIDocument + UXML + USS). Tokens, components, icons, mobile responsiveness, and a runtime helper — all themed dark, all keyboard-and-touch-ready, all editable from one stylesheet.
+A drop-in **design system for Unity 6 UI Toolkit** (UIDocument + UXML + USS). Tokens, components, icons, mobile responsiveness, and a runtime helper — all themed dark, all keyboard-and-touch-ready, all editable from one stylesheet. Open-sourced as part of a small giving-back set of Unity tools — alongside the [Voronoi mesh fracturer](https://github.com/sinanata/unity-mesh-fracture) and the [cross-platform build orchestrator](https://github.com/sinanata/unity-cross-platform-local-build-orchestrator).
 
 <blockquote>
 <a href="https://store.steampowered.com/app/2269500/"><img src="docs/leap-of-legends-icon.png" align="left" width="70" height="70" alt="Leap of Legends"></a>
