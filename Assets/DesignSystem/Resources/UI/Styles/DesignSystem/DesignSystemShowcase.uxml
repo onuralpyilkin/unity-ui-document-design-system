@@ -22,6 +22,10 @@
                         <ui:Toggle name="theme-toggle" class="ds-toggle"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
+                <ui:DropdownField name="theme-provider-dropdown" choices="Design System default" index="0" class="ds-dropdown" style="margin-bottom: 8px;"/>
+                <ui:Button name="theme-randomize" text="Randomize colors" class="ds-btn ds-btn--secondary" style="margin-bottom: 6px;"/>
+                <ui:Button name="theme-codigrate-link" text="Themes by Codigrate" class="ds-btn ds-btn--ghost" style="margin-bottom: 8px;"/>
+                <ui:Label name="theme-provider-status" text="" class="ds-caption showcase-placeholder-text" style="margin-bottom: 8px; white-space: normal;"/>
                 <ui:VisualElement class="ds-swatch-row">
                     <ui:VisualElement class="ds-swatch ds-swatch--primary"/>
                     <ui:Label text="Primary" class="ds-swatch__name"/>
@@ -1052,15 +1056,15 @@
             <ui:VisualElement class="ds-section" style="width: 380px;">
                 <ui:Label text="DRAWER — TOP OVERLAY" class="ds-section__title"/>
                 <ui:Label text="Slides down from the top edge over the content beneath. Useful for menus and command palettes. Click the menu icon to open." class="ds-body-2" style="color: rgb(161, 167, 179); margin-bottom: 12px; white-space: normal;"/>
-                <ui:VisualElement name="drawer-top-wrap" class="ds-drawer-wrap" style="height: 220px; background-color: rgb(11, 15, 23); border-radius: 12px; border-width: 1px; border-color: rgb(38, 48, 65);">
-                    <ui:VisualElement style="flex-direction: row; align-items: center; padding-left: 12px; padding-right: 12px; padding-top: 10px; padding-bottom: 10px; border-bottom-width: 1px; border-bottom-color: rgb(38, 48, 65);">
+                <ui:VisualElement name="drawer-top-wrap" class="ds-drawer-wrap showcase-drawer-frame" style="height: 220px;">
+                    <ui:VisualElement class="showcase-drawer-strip" style="flex-direction: row; align-items: center; padding-left: 12px; padding-right: 12px; padding-top: 10px; padding-bottom: 10px;">
                         <ui:Button name="drawer-top-burger" class="ds-btn ds-btn--icon">
                             <ui:VisualElement class="ds-icon ds-icon--menu"/>
                         </ui:Button>
                         <ui:Label text="Document" class="ds-h3" style="margin-left: 12px; flex-grow: 1;"/>
                     </ui:VisualElement>
                     <ui:VisualElement style="flex-grow: 1; align-items: center; justify-content: center;">
-                        <ui:Label text="Workspace" class="ds-body-2" style="color: rgb(103, 112, 133); white-space: normal; -unity-text-align: middle-center;"/>
+                        <ui:Label text="Workspace" class="ds-body-2 showcase-placeholder-text" style="white-space: normal; -unity-text-align: middle-center;"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="drawer-top" class="ds-drawer ds-drawer--top" style="height: 130px;">
                         <ui:VisualElement class="ds-drawer__header">
@@ -1080,16 +1084,16 @@
             <ui:VisualElement class="ds-section" style="width: 380px;">
                 <ui:Label text="DRAWER — RIGHT OVERLAY" class="ds-section__title"/>
                 <ui:Label text="Slides in from the right over a dimmed backdrop. Click the dim layer or the close button to dismiss." class="ds-body-2" style="color: rgb(161, 167, 179); margin-bottom: 12px; white-space: normal;"/>
-                <ui:VisualElement name="drawer-right-wrap" class="ds-drawer-wrap" style="height: 280px; background-color: rgb(11, 15, 23); border-radius: 12px; border-width: 1px; border-color: rgb(38, 48, 65);">
-                    <ui:VisualElement style="flex-direction: row; align-items: center; padding-left: 12px; padding-right: 12px; padding-top: 10px; padding-bottom: 10px; border-bottom-width: 1px; border-bottom-color: rgb(38, 48, 65);">
+                <ui:VisualElement name="drawer-right-wrap" class="ds-drawer-wrap showcase-drawer-frame" style="height: 280px;">
+                    <ui:VisualElement class="showcase-drawer-strip" style="flex-direction: row; align-items: center; padding-left: 12px; padding-right: 12px; padding-top: 10px; padding-bottom: 10px;">
                         <ui:Button name="drawer-right-burger" class="ds-btn ds-btn--icon">
                             <ui:VisualElement class="ds-icon ds-icon--menu"/>
                         </ui:Button>
                         <ui:Label text="Library" class="ds-h3" style="margin-left: 12px; flex-grow: 1;"/>
                     </ui:VisualElement>
                     <ui:VisualElement style="flex-grow: 1; align-items: center; justify-content: center; padding: 16px;">
-                        <ui:VisualElement class="ds-icon ds-icon--lg ds-icon--list" style="-unity-background-image-tint-color: rgb(103, 112, 133); margin-bottom: 8px;"/>
-                        <ui:Label text="Open the menu to apply filters" class="ds-body-2" style="color: rgb(103, 112, 133); white-space: normal; -unity-text-align: middle-center;"/>
+                        <ui:VisualElement class="ds-icon ds-icon--lg ds-icon--list showcase-placeholder-icon" style="margin-bottom: 8px;"/>
+                        <ui:Label text="Open the menu to apply filters" class="ds-body-2 showcase-placeholder-text" style="white-space: normal; -unity-text-align: middle-center;"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="drawer-right-backdrop" class="ds-drawer__backdrop"/>
                     <ui:VisualElement name="drawer-right" class="ds-drawer ds-drawer--right" style="width: 240px;">
@@ -1125,17 +1129,17 @@
             <ui:VisualElement class="ds-section" style="width: 540px;">
                 <ui:Label text="DRAWER — RIGHT PUSH (SHRINKING SIBLINGS)" class="ds-section__title"/>
                 <ui:Label text="The drawer is part of the flex flow, so opening it shrinks the main column to make room — content stays interactive on both sides." class="ds-body-2" style="color: rgb(161, 167, 179); margin-bottom: 12px; white-space: normal;"/>
-                <ui:VisualElement name="drawer-push-wrap" class="ds-drawer-wrap" style="height: 280px; background-color: rgb(11, 15, 23); border-radius: 12px; border-width: 1px; border-color: rgb(38, 48, 65); flex-direction: row;">
+                <ui:VisualElement name="drawer-push-wrap" class="ds-drawer-wrap showcase-drawer-frame" style="height: 280px; flex-direction: row;">
                     <ui:VisualElement style="flex-grow: 1; flex-direction: column;">
-                        <ui:VisualElement style="flex-direction: row; align-items: center; padding-left: 12px; padding-right: 12px; padding-top: 10px; padding-bottom: 10px; border-bottom-width: 1px; border-bottom-color: rgb(38, 48, 65);">
+                        <ui:VisualElement class="showcase-drawer-strip" style="flex-direction: row; align-items: center; padding-left: 12px; padding-right: 12px; padding-top: 10px; padding-bottom: 10px;">
                             <ui:Button name="drawer-push-burger" class="ds-btn ds-btn--icon">
                                 <ui:VisualElement class="ds-icon ds-icon--menu"/>
                             </ui:Button>
                             <ui:Label text="Editor" class="ds-h3" style="margin-left: 12px; flex-grow: 1;"/>
                         </ui:VisualElement>
                         <ui:VisualElement style="flex-grow: 1; align-items: center; justify-content: center; padding: 16px;">
-                            <ui:VisualElement class="ds-icon ds-icon--lg ds-icon--edit" style="-unity-background-image-tint-color: rgb(103, 112, 133); margin-bottom: 8px;"/>
-                            <ui:Label text="Open the menu to reveal the inspector" class="ds-body-2" style="color: rgb(103, 112, 133); white-space: normal; -unity-text-align: middle-center;"/>
+                            <ui:VisualElement class="ds-icon ds-icon--lg ds-icon--edit showcase-placeholder-icon" style="margin-bottom: 8px;"/>
+                            <ui:Label text="Open the menu to reveal the inspector" class="ds-body-2 showcase-placeholder-text" style="white-space: normal; -unity-text-align: middle-center;"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement name="drawer-push" class="ds-drawer ds-drawer--right ds-drawer--push" style="width: 240px;">

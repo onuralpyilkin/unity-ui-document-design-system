@@ -475,7 +475,12 @@
 .ds-drawer.ds-drawer--bottom,
 .ds-drawer.ds-drawer--left {
     position: absolute;
-    transition-property: translate;
+    /* `translate` first so the slide animation runs with the rule's
+       authored 200ms duration. The color list keeps the drawer in step
+       with the universal theme-swap transition declared in
+       ShowcaseTheme.uss — without it the surface + borders snap-cut
+       while the rest of the page eases between dark/light. */
+    transition-property: translate, background-color, color, border-color, border-top-color, border-right-color, border-bottom-color, border-left-color, -unity-background-image-tint-color;
 }
 
 .ds-drawer.ds-drawer--top {
@@ -537,7 +542,7 @@
     width: 280px;
     max-width: 0;
     flex-shrink: 0;
-    transition-property: max-width;
+    transition-property: max-width, background-color, color, border-color, border-top-color, border-right-color, border-bottom-color, border-left-color, -unity-background-image-tint-color;
 }
 
 .ds-drawer.ds-drawer--push.ds-drawer--top,
@@ -545,7 +550,7 @@
     height: 200px;
     max-height: 0;
     flex-shrink: 0;
-    transition-property: max-height;
+    transition-property: max-height, background-color, color, border-color, border-top-color, border-right-color, border-bottom-color, border-left-color, -unity-background-image-tint-color;
 }
 
 .ds-drawer.ds-drawer--push.ds-drawer--left.ds-drawer--open,
