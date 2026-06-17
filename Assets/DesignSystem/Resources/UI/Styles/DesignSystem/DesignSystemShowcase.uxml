@@ -878,6 +878,47 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="ds-section" style="width: 320px;">
+                <ui:Label text="TOOLTIP" class="ds-section__title"/>
+                <ui:VisualElement class="ds-tooltip" style="position: relative; max-width: 260px;">
+                    <ui:Label text="Arctic Fox" class="ds-tooltip__title"/>
+                    <ui:Label text="Legendary companion" class="ds-tooltip__subtitle"/>
+                    <ui:Label text="A nimble companion that thrives in frozen biomes." class="ds-tooltip__body"/>
+                    <ui:VisualElement class="ds-tooltip__divider"/>
+                    <ui:VisualElement class="ds-tooltip__row">
+                        <ui:Label text="Speed" class="ds-tooltip__row-label"/>
+                        <ui:Label text="+12" class="ds-tooltip__row-value"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="ds-tooltip__row">
+                        <ui:Label text="Stamina" class="ds-tooltip__row-label"/>
+                        <ui:Label text="+8" class="ds-tooltip__row-value"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="ds-section" style="width: 360px;">
+                <ui:Label text="DRAG &amp; DROP" class="ds-section__title"/>
+                <ui:Label text="Drag a chip between the two zones." class="ds-caption ds-text-secondary" style="margin-bottom: 8px;"/>
+                <ui:VisualElement style="flex-direction: row;">
+                    <ui:VisualElement class="ds-drop-zone" style="flex-grow: 1; margin-right: 8px; min-height: 130px;">
+                        <ui:Label text="Backpack" class="ds-caption ds-text-secondary" style="margin-bottom: 8px;"/>
+                        <ui:VisualElement class="ds-chip ds-chip--owned ds-draggable" style="margin-bottom: 6px;">
+                            <ui:VisualElement class="ds-icon ds-icon--xs ds-icon--paw ds-chip__icon"/>
+                            <ui:Label text="Frog"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="ds-chip ds-chip--owned ds-draggable" style="margin-bottom: 6px;">
+                            <ui:VisualElement class="ds-icon ds-icon--xs ds-icon--leaf ds-chip__icon"/>
+                            <ui:Label text="Herb"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="ds-drop-zone" style="flex-grow: 1; margin-left: 8px; min-height: 130px;">
+                        <ui:Label text="Chest" class="ds-caption ds-text-secondary" style="margin-bottom: 8px;"/>
+                        <ui:VisualElement class="ds-chip ds-chip--equipped ds-draggable" style="margin-bottom: 6px;">
+                            <ui:VisualElement class="ds-icon ds-icon--xs ds-icon--gift ds-chip__icon"/>
+                            <ui:Label text="Relic"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="ds-section" style="width: 320px;">
                 <ui:Label text="BOTTOM SHEET / DRAWER (MOBILE)" class="ds-section__title"/>
                 <ui:VisualElement class="ds-sheet">
                     <ui:VisualElement class="ds-sheet__handle"/>

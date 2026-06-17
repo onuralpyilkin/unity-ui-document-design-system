@@ -25,6 +25,11 @@ namespace UIDocumentDesignSystem
         const string TOGGLE_KNOB_CLASS     = "ds-toggle__knob";
         const string SKELETON_CLASS        = "ds-skeleton";
         const string SHIMMER_CLASS         = "ds-skeleton__shimmer";
+        const string DRAGGABLE_CLASS       = "ds-draggable";
+        const string DRAG_WIRED_CLASS      = "ds-drag--wired";   // internal: marks an already-wired draggable
+        const string DROP_ZONE_CLASS       = "ds-drop-zone";
+        const string DRAG_OVER_CLASS       = "is-drag-over";
+        const string DRAG_GHOST_CLASS      = "ds-drag-ghost";
 
         UIDocument _doc;
         IVisualElementScheduledItem _spinTask;
@@ -68,6 +73,7 @@ namespace UIDocumentDesignSystem
             if (root == null) return;
             EnsureToggleKnobs(root);
             EnsureSkeletonShimmers(root);
+            EnsureDraggables(root);
             StartSpinners(root);
 
             // Periodic re-scan: ScreenBase and similar consumers clone screen
@@ -84,6 +90,7 @@ namespace UIDocumentDesignSystem
             {
                 EnsureToggleKnobs(root);
                 EnsureSkeletonShimmers(root);
+                EnsureDraggables(root);
             }).Every(250);
         }
 
@@ -277,6 +284,102 @@ namespace UIDocumentDesignSystem
                     shimmer.style.translate = new StyleTranslate(
                         new Translate(new Length(t * 200f - 100f, LengthUnit.Percent), 0));
                 }).Every(16);
+            });
+        }
+
+        /// <summary>
+        /// Wire pointer-drag behavior onto every `.ds-draggable` not yet wired. Dragging spawns a
+        /// `.ds-drag-ghost` that follows the pointer, highlights the `.ds-drop-zone` under it with
+        /// `is-drag-over`, and on release moves the dragged element into that zone (the common
+        /// "move item between containers" case — reparents on drop). Idempotent.
+        ///
+        /// This is the drop-in, no-code pattern: mark items `.ds-draggable`, mark containers
+        /// `.ds-drop-zone`, done. For CUSTOM drop logic (split/merge/transfer like a game inventory),
+        /// don't mark elements `.ds-draggable` — drive your own pointer handling and simply reuse the
+        /// `.ds-drag-ghost` / `.ds-drop-zone` / `is-drag-over` visual classes for a consistent look.
+        /// </summary>
+        public static void EnsureDraggables(VisualElement root)
+        {
+            if (root == null) return;
+            root.Query(className: DRAGGABLE_CLASS).ForEach(item =>
+            {
+                if (item.ClassListContains(DRAG_WIRED_CLASS)) return;
+                item.AddToClassList(DRAG_WIRED_CLASS);
+                WireDraggable(item);
+            });
+        }
+
+        static void WireDraggable(VisualElement item)
+        {
+            VisualElement ghost = null;
+            VisualElement currentZone = null;
+
+            VisualElement Root() => item.panel != null ? item.panel.visualTree : null;
+
+            void PositionGhost(Vector2 pos)
+            {
+                if (ghost == null) return;
+                ghost.style.left = pos.x - ghost.resolvedStyle.width / 2f;
+                ghost.style.top = pos.y - ghost.resolvedStyle.height / 2f;
+            }
+
+            VisualElement ZoneUnder(Vector2 pos)
+            {
+                var root = Root();
+                if (root == null) return null;
+                VisualElement found = null;
+                root.Query(className: DROP_ZONE_CLASS).ForEach(z =>
+                {
+                    if (z.worldBound.Contains(pos)) found = z;
+                });
+                return found;
+            }
+
+            void SetZone(VisualElement zone)
+            {
+                if (currentZone == zone) return;
+                currentZone?.RemoveFromClassList(DRAG_OVER_CLASS);
+                currentZone = zone;
+                currentZone?.AddToClassList(DRAG_OVER_CLASS);
+            }
+
+            item.RegisterCallback<PointerDownEvent>(e =>
+            {
+                if (e.button != 0) return;
+                var root = Root();
+                if (root == null) return;
+
+                ghost = new VisualElement();
+                ghost.AddToClassList(DRAG_GHOST_CLASS);
+                ghost.pickingMode = PickingMode.Ignore;
+                var label = item.Q<Label>();
+                ghost.Add(new Label(label != null ? label.text : "•"));
+                root.Add(ghost);
+
+                item.CapturePointer(e.pointerId);
+                PositionGhost(e.position);
+                e.StopPropagation();
+            });
+
+            item.RegisterCallback<PointerMoveEvent>(e =>
+            {
+                if (!item.HasPointerCapture(e.pointerId)) return;
+                PositionGhost(e.position);
+                SetZone(ZoneUnder(e.position));
+            });
+
+            item.RegisterCallback<PointerUpEvent>(e =>
+            {
+                if (!item.HasPointerCapture(e.pointerId)) return;
+                item.ReleasePointer(e.pointerId);
+
+                var zone = ZoneUnder(e.position);
+                if (zone != null && zone != item.parent)
+                    zone.Add(item); // move into the drop zone
+
+                SetZone(null);
+                ghost?.RemoveFromHierarchy();
+                ghost = null;
             });
         }
 

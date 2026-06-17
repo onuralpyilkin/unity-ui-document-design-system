@@ -153,6 +153,10 @@ Set placeholders via `field.textEdition.placeholder = "..."` in C#. Unity 6's AP
 | `.ds-empty` | Empty-state block (icon-bg + title + message + CTA). |
 | `.ds-empty__icon-bg` | 64 × 64 surface-elev circle behind the icon. |
 | `.ds-empty__title` / `__message` | Stack of centred labels. |
+| `.ds-tooltip` | Floating info surface; the consumer positions it (mouse-follow / edge-flip). Elevated tier + strong border. |
+| `.ds-tooltip__title` / `__subtitle` / `__body` | Title (body-1 bold), subtitle (caption), body (body-2, wraps). |
+| `.ds-tooltip__divider` | Hairline separator between sections. |
+| `.ds-tooltip__row` | Flex-row stat line; `.ds-tooltip__row-label` (left) + `.ds-tooltip__row-value` (right, bold). |
 
 ## Feedback
 
@@ -191,6 +195,17 @@ To render a framed scroll-view demo (used in the showcase's SCROLLBARS section):
 ```
 
 The `.ds-scrollbar-demo` class adds a `var(--color-bg)` background, `var(--color-border)` outline, and 8 px padding — useful for surfacing the scrollbar visually in documentation contexts. Lives in `Feedback.uss`.
+
+## Drag & drop
+
+| Class | Use |
+| --- | --- |
+| `.ds-draggable` | Marks an element draggable; the runtime auto-wires pointer drag + a ghost. |
+| `.ds-drop-zone` | A container that accepts a dropped `.ds-draggable` (reparents the item on drop). |
+| `.ds-drop-zone.is-drag-over` | Highlight applied to a drop zone while a drag hovers it. |
+| `.ds-drag-ghost` | The floating preview that follows the pointer during a drag. Reuse it from custom drag code (e.g. a game inventory) for a consistent look. |
+
+The runtime (`DesignSystemRuntime.EnsureDraggables`) auto-wires `.ds-draggable` for the simple "move between zones" case. Inventories with split / merge / transfer logic drive their own pointer handling and reuse only the `.ds-drag-ghost` / `.is-drag-over` visuals.
 
 ## Icons
 

@@ -639,3 +639,56 @@
 .ds-drawer-wrap.is-open .ds-drawer__backdrop {
     opacity: 1;
 }
+
+/* ============================================================================
+   DRAG & DROP
+   - .ds-draggable  : mark an element draggable (the runtime auto-wires it)
+   - .ds-drop-zone  : a container that accepts a dropped .ds-draggable
+   - .is-drag-over  : added to a drop zone while a drag hovers it
+   - .ds-drag-ghost : the element that follows the pointer during a drag
+   The runtime (DesignSystemRuntime.EnsureDraggables) wires `.ds-draggable` for the
+   simple "move element between zones" case (reparents on drop). Game inventories with
+   custom split / merge / transfer logic drive their own pointer handling and reuse just
+   the `.ds-drag-ghost` / `.is-drag-over` visual classes for a consistent look.
+   ============================================================================ */
+.ds-drop-zone {
+    background-color: var(--color-surface);
+    border-width: var(--border-thin);
+    border-color: var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    transition-property: background-color, border-color;
+    transition-duration: 120ms;
+}
+
+.ds-drop-zone.is-drag-over {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary-soft);
+}
+
+.ds-draggable {
+    /* Visual styling stays on whatever component class the item already carries; this
+       just adds the lift affordance + a transition so the runtime's drag feels alive. */
+    transition-property: scale, opacity;
+    transition-duration: 120ms;
+}
+
+.ds-draggable:hover {
+    scale: 1.03 1.03;
+}
+
+/* Floating preview that follows the pointer. Positioned by the runtime (or by a consumer's
+   own drag code). Reused by game inventories that keep their own drag mechanics. */
+.ds-drag-ghost {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+    background-color: var(--color-surface-elev);
+    border-width: var(--border-regular);
+    border-color: var(--color-primary);
+    border-radius: var(--radius-md);
+    opacity: 0.9;
+    align-items: center;
+    justify-content: center;
+    -unity-text-align: middle-center;
+}

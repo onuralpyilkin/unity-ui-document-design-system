@@ -4,6 +4,13 @@ All notable changes to this project will be documented here.
 
 This project loosely follows [Semantic Versioning](https://semver.org/) and uses the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
 
+## [Unreleased]
+
+### Added
+
+- **`.ds-tooltip`** — a floating info-surface component (in `Overlays.uss`). A positioned card (the **consumer** sets the screen position, e.g. mouse-follow with edge-flip in C#) on the elevated surface tier with a *strong* border so it reads clearly when floating over busy content rather than nested inside a card. Slots: `__title` (body-1 bold), `__subtitle` (caption), `__body` (body-2, wraps), `__divider` (hairline), and `__row` (`__row-label` left + `__row-value` right) for stat lines. Fills the gap that item/unit tooltips previously had to cover by borrowing `.ds-card`. Rendered in the showcase's TOOLTIP section; documented in `docs/COMPONENTS.md`.
+- **Drag & drop** — `.ds-draggable` / `.ds-drop-zone` / `.is-drag-over` / `.ds-drag-ghost` (in `Controls.uss`) plus auto-wiring in `DesignSystemRuntime.EnsureDraggables`: mark items `.ds-draggable` and containers `.ds-drop-zone` and the runtime handles pointer drag, a floating `.ds-drag-ghost`, drop-zone highlighting, and reparent-on-drop — no code. Game inventories with custom split/merge/transfer logic drive their own pointer handling and reuse only the `.ds-drag-ghost` / `.is-drag-over` visuals. Rendered in the showcase's DRAG & DROP section.
+
 ## [1.4.1] — 2026-05-17
 
 ### Fixed
