@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
@@ -19,6 +20,7 @@ namespace DesignSystem.Runtime
     [DisallowMultipleComponent]
     public abstract class DesignSystemRuntimeBase<TComponent> : MonoBehaviour where TComponent : Component
     {
+        private static readonly Dictionary<System.Type, System.Type> s_componentTypeMap = new();
         private const string SPINNER_CLASS         = "ds-spinner";
         private const string SPINNER_ACTIVE_CLASS  = "is-spinning";
         private const string TOGGLE_CLASS          = "ds-toggle";
@@ -367,8 +369,9 @@ namespace DesignSystem.Runtime
          * to be able to register the auto attach method.
          * Otherwise, you will need to add your component manually to your GameObjects.
          */
-        protected static void RegisterAutoAttach()
+        protected static void RegisterAutoAttach(System.Type runtimeComponentType)
         {
+            s_componentTypeMap[typeof(TComponent)] = runtimeComponentType;
             SceneManager.sceneLoaded -= OnSceneLoaded;
             SceneManager.sceneLoaded += OnSceneLoaded;
             return;
@@ -378,12 +381,15 @@ namespace DesignSystem.Runtime
 
         public static void AttachToAll()
         {
+            if (!s_componentTypeMap.TryGetValue(typeof(TComponent), out var runtimeType))
+                return;
+
             var docs = FindObjectsByType<TComponent>();
             foreach (var doc in docs)
             {
-                if (doc == null || doc.gameObject.GetComponent<DesignSystemRuntimeBase<TComponent>>() == null )
+                if (doc == null || doc.gameObject.GetComponent(runtimeType) != null)
                     continue;
-                doc.gameObject.AddComponent<DesignSystemRuntimeBase<TComponent>>();
+                doc.gameObject.AddComponent(runtimeType);
             }
         }
     }

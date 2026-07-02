@@ -42,6 +42,6 @@ namespace DesignSystem.Runtime.UIDocumentRuntime
         }
         
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void _RegisterAutoAttach() => RegisterAutoAttach();
+        private static void _RegisterAutoAttach() => RegisterAutoAttach(typeof(DesignSystemRuntime));
     }
 }
