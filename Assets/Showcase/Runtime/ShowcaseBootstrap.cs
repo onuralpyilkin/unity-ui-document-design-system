@@ -1,13 +1,17 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
-using UnityEngine.UIElements;
 using UnityEngine.SceneManagement;
+using UnityEngine.UIElements;
+using DesignSystem.Runtime.UIDocumentRuntime;
+using Object = UnityEngine.Object;
+#if UNITY_WEBGL && !UNITY_EDITOR
+using System.Runtime.InteropServices;
+#endif
 
-namespace UIDocumentDesignSystem.Showcase
+namespace Showcase.Runtime
 {
     // Spawns the showcase + doc-overlay UIDocuments at runtime so the .unity
     // scene stays empty (one camera). Means the scene file has no MonoBehaviour
@@ -15,6 +19,7 @@ namespace UIDocumentDesignSystem.Showcase
     // recreated programmatically every Play.
     public static class ShowcaseBootstrap
     {
+        const string DEFAULT_PANEL_SETTINGS = "DefaultPanelSettings";
         const string SHOWCASE_RES_PATH = "UI/Styles/DesignSystem/DesignSystemShowcase";
         const string THEME_RES_PATH    = "UnityDefaultRuntimeTheme";
         const int    MOBILE_BREAKPOINT = 768;
@@ -175,12 +180,13 @@ namespace UIDocumentDesignSystem.Showcase
             // which may fire BEFORE our AfterSceneLoad init — so the GameObjects
             // we just created would miss the initial attach. Nudge it manually.
             // The runtime is idempotent; calling twice is a no-op.
-            UIDocumentDesignSystem.DesignSystemRuntime.AttachToAllUIDocuments();
+            DesignSystemRuntime.AttachToAll();
         }
 
         static PanelSettings MakePanelSettings(int sortingOrder, string name, ThemeStyleSheet theme)
         {
-            var ps = ScriptableObject.CreateInstance<PanelSettings>();
+            var panelSettingsAsset = Resources.Load<PanelSettings>(DEFAULT_PANEL_SETTINGS);
+            var ps = panelSettingsAsset != null ? Object.Instantiate(panelSettingsAsset) : ScriptableObject.CreateInstance<PanelSettings>();
             ps.name = name;
             if (theme != null) ps.themeStyleSheet = theme;
 
@@ -583,18 +589,18 @@ namespace UIDocumentDesignSystem.Showcase
         {
             if (root == null) return;
 
-            UIDocumentDesignSystem.DesignSystemRuntime.WireDrawer(
+            DesignSystemRuntime.WireDrawer(
                 root.Q<Button>("drawer-top-burger"),
                 root.Q("drawer-top-wrap"),
                 root.Q<Button>("drawer-top-close"));
 
-            UIDocumentDesignSystem.DesignSystemRuntime.WireDrawer(
+            DesignSystemRuntime.WireDrawer(
                 root.Q<Button>("drawer-right-burger"),
                 root.Q("drawer-right-wrap"),
                 root.Q<Button>("drawer-right-close"),
                 root.Q("drawer-right-backdrop"));
 
-            UIDocumentDesignSystem.DesignSystemRuntime.WireDrawer(
+            DesignSystemRuntime.WireDrawer(
                 root.Q<Button>("drawer-push-burger"),
                 root.Q("drawer-push-wrap"),
                 root.Q<Button>("drawer-push-close"));
@@ -607,7 +613,7 @@ namespace UIDocumentDesignSystem.Showcase
         {
             if (root == null) return;
             var sv = root.Q<ScrollView>("auto-hide-scroll");
-            UIDocumentDesignSystem.DesignSystemRuntime.WireScrollAutoHide(sv);
+            DesignSystemRuntime.WireScrollAutoHide(sv);
         }
     }
 }
