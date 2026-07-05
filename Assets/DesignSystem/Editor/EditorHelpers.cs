@@ -49,7 +49,7 @@ namespace DesignSystem.Editor
 
             var uxml = File.ReadAllText(assetPath);
 
-            if (uxml.Contains(src))
+            if (uxml.Contains(guid))
             {
                 EditorUtility.DisplayDialog("Already Added",
                     "This stylesheet is already referenced in the UXML.", "OK");
@@ -58,7 +58,7 @@ namespace DesignSystem.Editor
 
             uxml = Regex.Replace(
                 uxml,
-                @"^(\s*<ui:UXML[^>]*>)\s*",
+                @"^(\s*<(?:ui:)?UXML[^>]*>)\s*",
                 $"$1\n  {tag}\n",
                 RegexOptions.Multiline | RegexOptions.Singleline);
 
