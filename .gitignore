@@ -126,6 +126,9 @@ desktop.ini
 *~
 .idea/
 
+# Auto-generated XSD files
+UIElementsSchema/
+
 # Unity .meta files for the design system are intentionally NOT ignored —
 # they carry import settings (svgType, asmdef refs, etc.) that consumers
 # should reuse rather than regenerate.
