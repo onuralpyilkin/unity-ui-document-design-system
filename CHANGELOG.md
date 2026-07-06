@@ -4,6 +4,42 @@ All notable changes to this project will be documented here.
 
 This project loosely follows [Semantic Versioning](https://semver.org/) and uses the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
 
+## [1.4.3] — 2026-07-06
+
+The showcase gains a second mode: a walkable 3D gallery where all 29 sections hang as live, fully interactive world-space panels (`PanelRenderer`, Unity 6000.5+) on the walls of a lit corridor. Dropdown popups now behave like web selects in both modes, drag & drop works everywhere, and the repo ships metadata for contributors and AI coding assistants. First release published to OpenUPM. Same showcase URL, refresh to see.
+
+### Added
+
+- **World-space showcase gallery** (Unity 6000.5+ only; the flat page is unchanged on older versions). A segmented `Screen Space / World Space` switch under the hero swaps the flat page for a first-person corridor where every section is its own world-space panel (one `PanelRenderer` + world-space `PanelSettings` per section, `WorldSpaceSizeMode.Dynamic`). Everything stays interactive: buttons, inputs, dropdowns, drawers, drag & drop, and the theme system (day/night, Codigrate palettes, random) work from the flat page or from inside the gallery, mirrored both ways.
+    - **Movement**: WASD or arrows to walk, hold right-mouse or Q/E to look, Esc or the Screen Space tab exits. Typing into an exhibit's text field never moves the camera. Touch devices get two pointer-captured on-screen sticks (walk + look) so camera input and component taps cannot conflict; portrait screens widen the FOV.
+    - **Exhibit sizing** comes from the flat page's resolved layout, because UXML-authored inline styles are not visible to the C# `style` API (see Notes in the repo memory of 1.4.2 era; `resolvedStyle` on the live document is the only truthful source).
+    - Panel roots carry `ds-root` so the scoped styling families (slim scrollbars, 14px baseline, transitions, focus ring) match the flat page, and each world panel loads the dropdown-popup stylesheet at its own panel scope.
+- **`DesignSystemRuntime.EnsureDropdownMenus(root)`** (package runtime, both backends). Wires every `.ds-dropdown` `DropdownField` so its popup follows the web select model: always opens DOWNWARD from the field, pinned to the field's width, capped to the space below it (up to 320px), scrolling vertically only, re-asserted after Unity's own positioning pass (`GenericDropdownMenu` otherwise sizes the popup to the raw option list and flips or slides it when that doesn't fit). Auto-wired by `InitFor` on both backends and by the showcase's world exhibits; idempotent via a marker class.
+- **URP render pipeline assets** in `Assets/Settings/` (`URPRenderPipelineAsset` + Forward renderer), now actually referenced by `GraphicsSettings` and both quality levels. See Fixed for what the previous dangling references did.
+- **`Assets/Editor/PopupProbe.cs`** editor diagnostic: enters play mode, opens every kind of showcase dropdown (flat page and world exhibits), and asserts the popup geometry with numbers (downward, snug gap, height cap, field-width pin, no horizontal scroller, popup inside the panel). Complements `PipelineProbe` (which render pipeline actually resolves) and `WorldLayoutProbe` (flat vs world layout numbers).
+- **Repo meta for contributors and AI assistants**: `AGENTS.md` and `llms.txt` teach Copilot, Cursor, Codex, and Claude Code the `ds-` classes, tokens, and runtime helpers; `.github/` ships bug-report and feature-request issue forms, an issue config, a PR template, and `copilot-instructions.md`; `CITATION.cff` and `SECURITY.md` cover citation metadata and a disclosure policy; README gains a badge row, a table of contents, and an AI-assistant pointer.
+
+### Changed
+
+- **Hero promo buttons.** Steam, App Store, and Google Play buttons (the game is live on all three stores) replace the old wishlist button.
+- **Showcase scene ships skybox-free**: solid-color camera background and flat ambient; corridor surfaces clone a committed URP Simple Lit material (`CorridorLit.mat`, emission keyword pinned) kept alive by a tiny scene renderer; the corridor shell is segmented so Forward per-object light limits illuminate the full hall.
+- **Showcase GIF** re-recorded from the current build (720px, 8fps, 112-color palette, 9.4MB, inside GitHub's 10MB render limit) and README restructured for the UPM package split (generic runtime base with UIDocument and PanelRenderer backends) and the world-space gallery.
+- **`package.json`**: fixed the misspelled `keyword` field to `keywords` and expanded the list (`ui-toolkit`, `unity6`, `design-system`, `design-tokens`, `component-library`, `dark-theme`, and friends) for UPM and GitHub discoverability. Version bumped to 1.4.3 for the OpenUPM release.
+
+### Fixed
+
+- **Dropdown popups opened upward with Unity's default chunky scrollbars on both axes.** Tall option lists (the Colors theme picker) flipped upward pinned to the panel edge on the flat page, and inside world panels, which are only as tall as their own section, every popup got clamped to whatever sliver of panel remained. Fixed by `EnsureDropdownMenus` (see Added) plus popup-stylesheet work: the popup attaches outside `.ds-root`, so the design system's slim-scrollbar restyle never reached it. `ShowcaseDropdownPopup.uss` now mirrors the slim 8px pill scrollbar for both themes, removes the horizontal scroller outright, and ellipsizes options longer than the field.
+- **Drag ghost rendered as a huge unstyled band; first frame placed it at NaN.** The ghost was parented to `panel.visualTree`, which sits ABOVE the element where every design-system stylesheet attaches, so no rule ever matched it (including its `position: absolute`): it entered layout flow and stretched the panel's full width, and the initial centering math divided by a not-yet-resolved `resolvedStyle.width`. The ghost now spawns under the nearest `.ds-root` ancestor, mirrors the dragged item's classes and children (a chip's ghost looks like that chip, with a primary lift border), centers via `translate(-50%,-50%)`, dims the source item while dragging (new `.is-dragging` state class), and cleans up on any pointer-capture loss.
+- **The project silently ran the built-in render pipeline.** `GraphicsSettings` and both quality levels referenced URP asset GUIDs that existed nowhere on disk, so every URP-tagged shader compiled to zero variants and runtime-instantiated materials rendered magenta in WebGL builds (the corridor's walls). Real URP pipeline + Forward renderer assets now live in `Assets/Settings/` and are wired up.
+- **Repeated Screen/World mode toggling crashed WebGL with an uncatchable `RuntimeError: divide by zero`.** A rebuilt world panel resolves a zero size for one frame and the engine's integer division on it is a wasm-spec trap that `wasmArithmeticExceptions` cannot suppress. World panels are never SetActive-toggled anymore: the 3D geometry toggles normally while panels switch `style.visibility`.
+- **Applying a Codigrate or random palette across the gallery reverted every panel except the last.** `CodigrateThemeApplier` kept one global stamp registry and `Apply` began with a global revert. Bookkeeping is per root now; day/night, Codigrate, and random themes work from either mode with the cloned theme controls mirrored both ways.
+- **Missing-glyph tofu in hero texts.** The runtime font atlas lacks the em dash, minus sign, and ellipsis glyphs; replaced with ASCII-safe text. The mode-band caption no longer wraps to two lines.
+
+### Notes
+
+- **Never put `Universal Render Pipeline/Lit` in Always Included Shaders on Unity 6000.5.2f1**: the WebGL build segfaults deterministically while enumerating its variant space. With a real pipeline asset and a scene-referenced material it is also unnecessary.
+- **Script-launched background editors cannot verify world-space layout.** Screen-space UIDocuments lay out fine without rendering, but `PanelRenderer` panels stay 2x0 stubs unless a Game view genuinely renders, even when the Game view is acquired, focused, and `Repaint()`-pumped every tick. `PopupProbe`'s screen assertions carry the numeric load; world mode is verified in the WebGL build.
+
 ## [1.4.2] — 2026-07-05
 
 ### Added
