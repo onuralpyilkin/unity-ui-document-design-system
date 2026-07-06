@@ -38,6 +38,27 @@ namespace UIDocumentDesignSystem.BuildTools
                 PlayerSettings.WebGL.decompressionFallback = true;
                 PlayerSettings.WebGL.template            = "PROJECT:ShowcaseTemplate";
 
+                // Relax float→int conversion traps to match other platforms'
+                // semantics. NOTE what this does NOT do: wasm i32 division by
+                // zero traps at the VM level regardless of this setting — the
+                // "RuntimeError: divide by zero" seen on repeated Screen/World
+                // toggles survived Ignore just fine. The actual fix for that is
+                // structural, in WorldSpaceCorridor.SetCorridorVisible: world
+                // panels are never torn down / rebuilt (a rebuilt panel resolves
+                // 0×0 for a frame, and that zero reaches an integer division in
+                // engine layout). Keep Ignore anyway; it is the saner semantics.
+                PlayerSettings.WebGL.wasmArithmeticExceptions = WebGLWasmArithmeticExceptions.Ignore;
+
+                // The corridor's runtime materials clone the CorridorLit asset —
+                // URP Simple Lit with _EMISSION enabled. Note it is the
+                // KeepAlive renderer in Showcase.unity referencing this material
+                // that defeats URP's "strip unused variants" pass (which zeroes
+                // any URP-family shader no build-scene renderer uses — Resources
+                // and Always-Included don't protect on 6000.5; that pass is what
+                // rendered the corridor magenta twice). The asset is committed;
+                // this self-heals if it's deleted or on the wrong shader.
+                EnsureCorridorMaterial();
+
                 var opts = new BuildPlayerOptions
                 {
                     scenes           = new[] { SCENE_PATH },
@@ -133,5 +154,48 @@ namespace UIDocumentDesignSystem.BuildTools
         }
 
         static CliArgs ParseArgs() => new CliArgs(Environment.GetCommandLineArgs());
+
+        // Ensure Assets/Showcase/Resources/CorridorLit.mat exists, built on
+        // URP Simple Lit with the _EMISSION keyword enabled. The corridor's
+        // runtime materials clone this asset; its keyword set is what pins the
+        // needed variants (including emission, for the glow strips — _EMISSION
+        // is a shader_feature, so a variant no built material uses doesn't
+        // ship) into the WebGL build. Simple Lit specifically, NOT Lit: on
+        // 6000.5.2f1 putting URP/Lit in Always-Included Shaders crashes the
+        // editor's shader-variant enumeration (segfault in
+        // ShaderCompilation::PrepareStageVariantsForSinglePlatform) during the
+        // WebGL build; Simple Lit + Unlit enumerate fine, and Blinn-Phong is
+        // indistinguishable from PBR on flat-colored corridor boxes.
+        public static void EnsureCorridorMaterial()
+        {
+            const string path = "Assets/Showcase/Resources/CorridorLit.mat";
+
+            var shader = Shader.Find("Universal Render Pipeline/Simple Lit")
+                      ?? Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null)
+            {
+                Debug.LogWarning("[BuildCli] URP Lit shader not found; corridor material not created.");
+                return;
+            }
+
+            var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (existing != null && existing.shader == shader && existing.IsKeywordEnabled("_EMISSION"))
+                return;
+            if (existing != null) AssetDatabase.DeleteAsset(path);   // wrong shader / keywords — rebuild
+
+            var m = new Material(shader) { name = "CorridorLit" };
+            m.SetColor("_BaseColor", new Color(0.2f, 0.2f, 0.25f, 1f));
+            m.SetFloat("_Smoothness", 0.1f);
+            m.SetFloat("_Metallic", 0f);
+            m.EnableKeyword("_EMISSION");
+            m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            m.SetColor("_EmissionColor", new Color(0.133f, 0.773f, 0.369f) * 2f);
+
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            AssetDatabase.CreateAsset(m, path);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.ImportAsset(path);
+            Debug.Log("[BuildCli] Created " + path + " (URP/Lit, _EMISSION on)");
+        }
     }
 }

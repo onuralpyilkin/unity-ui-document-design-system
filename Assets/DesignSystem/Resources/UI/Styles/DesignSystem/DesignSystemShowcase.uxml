@@ -4,13 +4,15 @@
         <ui:VisualElement name="promo-banner" class="showcase-chrome" style="background-color: rgb(0, 0, 0); border-bottom-width: 1px; border-bottom-color: rgb(38, 48, 65); padding-top: 32px; padding-bottom: 32px; padding-left: 24px; padding-right: 24px; align-items: center;">
             <ui:VisualElement style="max-width: 760px; align-items: center;">
                 <ui:Label text="Unity 6 UI Toolkit Design System" class="ds-h1" style="margin-bottom: 6px; -unity-text-align: middle-center;"/>
-                <ui:Label text="A drop-in design system for UIDocument + UXML + USS. Tokens, components, icons, mobile responsiveness, and a runtime helper — all themed dark, all keyboard-and-touch-ready, all editable from one stylesheet. Free under MIT." class="ds-body-1" style="color: rgb(161, 167, 179); -unity-text-align: middle-center; margin-bottom: 18px; white-space: normal;"/>
+                <ui:Label text="A drop-in design system for UIDocument + UXML + USS. Tokens, components, icons, mobile responsiveness, and a runtime helper: all themed dark, all keyboard-and-touch-ready, all editable from one stylesheet. Free under MIT." class="ds-body-1" style="color: rgb(161, 167, 179); -unity-text-align: middle-center; margin-bottom: 18px; white-space: normal;"/>
                 <ui:Label text="Hover or tap any component below to see its selector chain. Click classes to copy." class="ds-caption" style="color: rgb(103, 112, 133); -unity-text-align: middle-center; margin-bottom: 20px;"/>
                 <ui:VisualElement style="flex-direction: row; flex-wrap: wrap; justify-content: center;">
                     <ui:Button name="promo-github" text="View on GitHub" class="ds-btn ds-btn--primary" style="margin-right: 8px; margin-bottom: 8px;"/>
-                    <ui:Button name="promo-steam" text="Wishlist Leap of Legends" class="ds-btn ds-btn--secondary" style="margin-bottom: 8px;"/>
+                    <ui:Button name="promo-steam" text="Steam" class="ds-btn ds-btn--secondary" style="margin-right: 8px; margin-bottom: 8px;"/>
+                    <ui:Button name="promo-appstore" text="App Store" class="ds-btn ds-btn--secondary" style="margin-right: 8px; margin-bottom: 8px;"/>
+                    <ui:Button name="promo-playstore" text="Google Play" class="ds-btn ds-btn--secondary" style="margin-bottom: 8px;"/>
                 </ui:VisualElement>
-                <ui:Label text="Built for and battle-tested in Leap of Legends — a multiplayer platform fighter shipping to Steam, App Store, and Google Play." class="ds-caption" style="color: rgb(103, 112, 133); -unity-text-align: middle-center; margin-top: 12px; white-space: normal;"/>
+                <ui:Label text="Built for and battle-tested in Leap of Legends, a multiplayer platform fighter out now on Steam, the App Store, and Google Play." class="ds-caption" style="color: rgb(103, 112, 133); -unity-text-align: middle-center; margin-top: 12px; white-space: normal;"/>
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement style="flex-direction: row; flex-wrap: wrap; padding: 12px;">
@@ -966,7 +968,7 @@
             <ui:VisualElement class="ds-section" style="width: 200px;">
                 <ui:Label text="QUANTITY SELECTOR" class="ds-section__title"/>
                 <ui:VisualElement class="ds-stepper">
-                    <ui:Button text="−" class="ds-stepper__btn"/>
+                    <ui:Button text="-" class="ds-stepper__btn"/>
                     <ui:Label text="1" class="ds-stepper__value"/>
                     <ui:Button text="+" class="ds-stepper__btn"/>
                 </ui:VisualElement>
@@ -1095,7 +1097,7 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="ds-section" style="width: 380px;">
-                <ui:Label text="DRAWER — TOP OVERLAY" class="ds-section__title"/>
+                <ui:Label text="DRAWER: TOP OVERLAY" class="ds-section__title"/>
                 <ui:Label text="Slides down from the top edge over the content beneath. Useful for menus and command palettes. Click the menu icon to open." class="ds-body-2" style="color: rgb(161, 167, 179); margin-bottom: 12px; white-space: normal;"/>
                 <ui:VisualElement name="drawer-top-wrap" class="ds-drawer-wrap showcase-drawer-frame" style="height: 220px;">
                     <ui:VisualElement class="showcase-drawer-strip" style="flex-direction: row; align-items: center; padding-left: 12px; padding-right: 12px; padding-top: 10px; padding-bottom: 10px;">
@@ -1123,7 +1125,7 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="ds-section" style="width: 380px;">
-                <ui:Label text="DRAWER — RIGHT OVERLAY" class="ds-section__title"/>
+                <ui:Label text="DRAWER: RIGHT OVERLAY" class="ds-section__title"/>
                 <ui:Label text="Slides in from the right over a dimmed backdrop. Click the dim layer or the close button to dismiss." class="ds-body-2" style="color: rgb(161, 167, 179); margin-bottom: 12px; white-space: normal;"/>
                 <ui:VisualElement name="drawer-right-wrap" class="ds-drawer-wrap showcase-drawer-frame" style="height: 280px;">
                     <ui:VisualElement class="showcase-drawer-strip" style="flex-direction: row; align-items: center; padding-left: 12px; padding-right: 12px; padding-top: 10px; padding-bottom: 10px;">
@@ -1168,8 +1170,8 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="ds-section" style="width: 540px;">
-                <ui:Label text="DRAWER — RIGHT PUSH (SHRINKING SIBLINGS)" class="ds-section__title"/>
-                <ui:Label text="The drawer is part of the flex flow, so opening it shrinks the main column to make room — content stays interactive on both sides." class="ds-body-2" style="color: rgb(161, 167, 179); margin-bottom: 12px; white-space: normal;"/>
+                <ui:Label text="DRAWER: RIGHT PUSH (SHRINKING SIBLINGS)" class="ds-section__title"/>
+                <ui:Label text="The drawer is part of the flex flow, so opening it shrinks the main column to make room; content stays interactive on both sides." class="ds-body-2" style="color: rgb(161, 167, 179); margin-bottom: 12px; white-space: normal;"/>
                 <ui:VisualElement name="drawer-push-wrap" class="ds-drawer-wrap showcase-drawer-frame" style="height: 280px; flex-direction: row;">
                     <ui:VisualElement style="flex-grow: 1; flex-direction: column;">
                         <ui:VisualElement class="showcase-drawer-strip" style="flex-direction: row; align-items: center; padding-left: 12px; padding-right: 12px; padding-top: 10px; padding-bottom: 10px;">
@@ -1210,10 +1212,10 @@
                 <ui:Label text="Hover the box to reveal the scrollbar; it fades out when the cursor leaves. On touch the helper flashes the bar for 700 ms after each scroll." class="ds-body-2" style="color: rgb(161, 167, 179); margin-bottom: 12px; white-space: normal;"/>
                 <ui:ScrollView name="auto-hide-scroll" mode="Vertical" class="ds-scrollbar-demo ds-scroll--auto-hide" style="height: 200px;">
                     <ui:Label text="The bar appears when you hover this list." class="ds-body-2" style="white-space: normal; margin-bottom: 8px;"/>
-                    <ui:Label text="It uses pure USS opacity transitions on the scroll-view's vertical and horizontal scroller children — no per-frame work." class="ds-body-2" style="white-space: normal; margin-bottom: 8px;"/>
+                    <ui:Label text="It uses pure USS opacity transitions on the scroll-view's vertical and horizontal scroller children; no per-frame work." class="ds-body-2" style="white-space: normal; margin-bottom: 8px;"/>
                     <ui:Label text="The same modifier works on horizontal scrollers." class="ds-body-2" style="white-space: normal; margin-bottom: 8px;"/>
                     <ui:Label text="On touch devices :hover never fires, so DesignSystemRuntime.WireScrollAutoHide adds an is-scrolling marker class for about 700 ms after each WheelEvent or PointerDownEvent that the rule also responds to." class="ds-body-2" style="white-space: normal; margin-bottom: 8px;"/>
-                    <ui:Label text="It composes with the existing slim 8 px scrollbar styling — no extra rules needed beyond the .ds-scroll--auto-hide modifier." class="ds-body-2" style="white-space: normal; margin-bottom: 8px;"/>
+                    <ui:Label text="It composes with the existing slim 8 px scrollbar styling; no extra rules needed beyond the .ds-scroll--auto-hide modifier." class="ds-body-2" style="white-space: normal; margin-bottom: 8px;"/>
                     <ui:Label text="Bottom of the demo list." class="ds-body-2" style="white-space: normal;"/>
                 </ui:ScrollView>
             </ui:VisualElement>

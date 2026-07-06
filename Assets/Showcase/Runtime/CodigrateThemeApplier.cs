@@ -43,19 +43,57 @@ namespace Showcase.Runtime
     //     of the showcase shows, so we focus there.
     public static class CodigrateThemeApplier
     {
-        // Track each property we've stamped per element so Revert can clear
-        // exactly the keys we touched and nothing else (avoiding clobbering
-        // inline styles that the UXML author baked in deliberately).
-        static readonly Dictionary<VisualElement, HashSet<TouchedProperty>> _touched
-            = new Dictionary<VisualElement, HashSet<TouchedProperty>>();
+        // ALL bookkeeping is scoped PER ROOT. The world-space gallery applies
+        // the same palette to ~30 separate panel roots in a loop; with a
+        // single global registry (the original design), each Apply()'s
+        // leading Revert() un-stamped the PREVIOUS panel's colours — after
+        // the loop only the last root kept the palette, which shipped as
+        // "codigrate/random themes don't work in world mode, only day/night".
+        sealed class RootState
+        {
+            // Track each property we've stamped per element so Revert can
+            // clear exactly the keys we touched and nothing else (avoiding
+            // clobbering inline styles the UXML author baked in deliberately).
+            public readonly Dictionary<VisualElement, HashSet<TouchedProperty>> Touched
+                = new Dictionary<VisualElement, HashSet<TouchedProperty>>();
 
-        // Pointer-enter / pointer-leave hover handlers we installed during
-        // Apply, kept here so Revert can detach them. Keys are the buttons
-        // (and tabs) we wired up.
-        static readonly Dictionary<VisualElement, EventCallback<PointerEnterEvent>> _enterHandlers
-            = new Dictionary<VisualElement, EventCallback<PointerEnterEvent>>();
-        static readonly Dictionary<VisualElement, EventCallback<PointerLeaveEvent>> _leaveHandlers
-            = new Dictionary<VisualElement, EventCallback<PointerLeaveEvent>>();
+            // Pointer-enter / pointer-leave hover handlers installed during
+            // Apply, kept so Revert can detach them.
+            public readonly Dictionary<VisualElement, EventCallback<PointerEnterEvent>> Enter
+                = new Dictionary<VisualElement, EventCallback<PointerEnterEvent>>();
+            public readonly Dictionary<VisualElement, EventCallback<PointerLeaveEvent>> Leave
+                = new Dictionary<VisualElement, EventCallback<PointerLeaveEvent>>();
+
+            // Toggle / radio value-change repaint callbacks.
+            public readonly Dictionary<Toggle, EventCallback<ChangeEvent<bool>>> Toggles
+                = new Dictionary<Toggle, EventCallback<ChangeEvent<bool>>>();
+            public readonly Dictionary<RadioButton, EventCallback<ChangeEvent<bool>>> Radios
+                = new Dictionary<RadioButton, EventCallback<ChangeEvent<bool>>>();
+        }
+
+        static readonly Dictionary<VisualElement, RootState> _roots
+            = new Dictionary<VisualElement, RootState>();
+
+        // The state of the root currently being applied/reverted. Set at the
+        // top of Apply()/Revert(); every helper below records into it.
+        static RootState _current;
+
+        static RootState StateFor(VisualElement root)
+        {
+            if (!_roots.TryGetValue(root, out var s))
+            {
+                s = new RootState();
+                _roots[root] = s;
+            }
+            return s;
+        }
+
+        // Forget every root (fresh scene load — old roots are dead trees).
+        public static void ResetAll()
+        {
+            _roots.Clear();
+            _current = null;
+        }
 
         enum TouchedProperty
         {
@@ -71,7 +109,8 @@ namespace Showcase.Runtime
         public static void Apply(VisualElement root, ColorMap map)
         {
             if (root == null || map == null) return;
-            Revert(root);
+            Revert(root);              // clears THIS root's previous stamps only
+            _current = StateFor(root); // Revert left it registered but empty
 
             // Root: bg + cascading text. `color` is inherited so every Label
             // descendant picks up the new primary text colour for free —
@@ -334,7 +373,7 @@ namespace Showcase.Runtime
                 el.style.borderRightColor  = map.SurfaceElev;
                 el.style.borderBottomColor = map.SurfaceElev;
                 el.style.borderLeftColor   = map.SurfaceElev;
-                if (!_touched.TryGetValue(el, out var set)) { set = new HashSet<TouchedProperty>(); _touched[el] = set; }
+                if (!_current.Touched.TryGetValue(el, out var set)) { set = new HashSet<TouchedProperty>(); _current.Touched[el] = set; }
                 set.Add(TouchedProperty.BorderColor);
             });
             ApplyClass(root, "ds-skeleton", el => Stamp(el, TouchedProperty.Background, map.SurfaceElev));
@@ -419,8 +458,10 @@ namespace Showcase.Runtime
         public static void Revert(VisualElement root)
         {
             if (root == null) return;
+            var st = StateFor(root);
+            _current = st;
 
-            foreach (var kv in _touched)
+            foreach (var kv in st.Touched)
             {
                 var el = kv.Key;
                 if (el == null) continue;
@@ -445,21 +486,21 @@ namespace Showcase.Runtime
                     }
                 }
             }
-            _touched.Clear();
+            st.Touched.Clear();
 
-            foreach (var kv in _enterHandlers) kv.Key?.UnregisterCallback(kv.Value);
-            foreach (var kv in _leaveHandlers) kv.Key?.UnregisterCallback(kv.Value);
-            _enterHandlers.Clear();
-            _leaveHandlers.Clear();
+            foreach (var kv in st.Enter) kv.Key?.UnregisterCallback(kv.Value);
+            foreach (var kv in st.Leave) kv.Key?.UnregisterCallback(kv.Value);
+            st.Enter.Clear();
+            st.Leave.Clear();
 
             // Toggle / radio value-change callbacks installed by WireToggleTrack
             // / WireRadio. UnregisterValueChangedCallback wants the exact
             // delegate we registered earlier, which is what the dictionary
             // stores keyed by the control.
-            foreach (var kv in _toggleHandlers) kv.Key?.UnregisterValueChangedCallback(kv.Value);
-            foreach (var kv in _radioHandlers)  kv.Key?.UnregisterValueChangedCallback(kv.Value);
-            _toggleHandlers.Clear();
-            _radioHandlers.Clear();
+            foreach (var kv in st.Toggles) kv.Key?.UnregisterValueChangedCallback(kv.Value);
+            foreach (var kv in st.Radios)  kv.Key?.UnregisterValueChangedCallback(kv.Value);
+            st.Toggles.Clear();
+            st.Radios.Clear();
         }
 
         // ─── BUTTON HELPERS ─────────────────────────────────────────────────
@@ -541,8 +582,8 @@ namespace Showcase.Runtime
             // Hover swap is a two-axis change (bg + border) so the generic
             // InstallHover helper doesn't fit — borders go to `BorderStrong`,
             // not the bg's hover variant. Inline the callbacks here.
-            if (_enterHandlers.TryGetValue(el, out var prevEnter)) el.UnregisterCallback(prevEnter);
-            if (_leaveHandlers.TryGetValue(el, out var prevLeave)) el.UnregisterCallback(prevLeave);
+            if (_current.Enter.TryGetValue(el, out var prevEnter)) el.UnregisterCallback(prevEnter);
+            if (_current.Leave.TryGetValue(el, out var prevLeave)) el.UnregisterCallback(prevLeave);
 
             Color baseBg = transparent;
             Color hoverBg = m.SurfaceElev;
@@ -568,8 +609,8 @@ namespace Showcase.Runtime
             };
             el.RegisterCallback(onEnter);
             el.RegisterCallback(onLeave);
-            _enterHandlers[el] = onEnter;
-            _leaveHandlers[el] = onLeave;
+            _current.Enter[el] = onEnter;
+            _current.Leave[el] = onLeave;
         }
 
         static void ApplyIconButton(VisualElement el, ColorMap m)
@@ -668,19 +709,19 @@ namespace Showcase.Runtime
             Repaint(toggle.value);
 
             // Track properties we touched so Revert clears them.
-            if (!_touched.TryGetValue(checkmark, out var set)) { set = new HashSet<TouchedProperty>(); _touched[checkmark] = set; }
+            if (!_current.Touched.TryGetValue(checkmark, out var set)) { set = new HashSet<TouchedProperty>(); _current.Touched[checkmark] = set; }
             set.Add(TouchedProperty.Background);
             set.Add(TouchedProperty.BorderColor);
             if (isCheckbox) set.Add(TouchedProperty.UnityBgTint);
 
             // De-register a prior callback if Apply ran twice (e.g. after a
             // theme swap) so we don't leak handlers onto the same Toggle.
-            if (_toggleHandlers.TryGetValue(toggle, out var prev))
+            if (_current.Toggles.TryGetValue(toggle, out var prev))
                 toggle.UnregisterValueChangedCallback(prev);
 
             EventCallback<ChangeEvent<bool>> cb = evt => Repaint(evt.newValue);
             toggle.RegisterValueChangedCallback(cb);
-            _toggleHandlers[toggle] = cb;
+            _current.Toggles[toggle] = cb;
         }
 
         // Radio (`ds-radio`) — outer ring + inner dot. Both elements live
@@ -709,28 +750,23 @@ namespace Showcase.Runtime
 
             if (ring != null)
             {
-                if (!_touched.TryGetValue(ring, out var set)) { set = new HashSet<TouchedProperty>(); _touched[ring] = set; }
+                if (!_current.Touched.TryGetValue(ring, out var set)) { set = new HashSet<TouchedProperty>(); _current.Touched[ring] = set; }
                 set.Add(TouchedProperty.Background);
                 set.Add(TouchedProperty.BorderColor);
             }
             if (dot != null)
             {
-                if (!_touched.TryGetValue(dot, out var set2)) { set2 = new HashSet<TouchedProperty>(); _touched[dot] = set2; }
+                if (!_current.Touched.TryGetValue(dot, out var set2)) { set2 = new HashSet<TouchedProperty>(); _current.Touched[dot] = set2; }
                 set2.Add(TouchedProperty.Background);
             }
 
-            if (_radioHandlers.TryGetValue(radio, out var prev))
+            if (_current.Radios.TryGetValue(radio, out var prev))
                 radio.UnregisterValueChangedCallback(prev);
 
             EventCallback<ChangeEvent<bool>> cb = evt => Repaint(evt.newValue);
             radio.RegisterValueChangedCallback(cb);
-            _radioHandlers[radio] = cb;
+            _current.Radios[radio] = cb;
         }
-
-        static readonly Dictionary<Toggle, EventCallback<ChangeEvent<bool>>> _toggleHandlers
-            = new Dictionary<Toggle, EventCallback<ChangeEvent<bool>>>();
-        static readonly Dictionary<RadioButton, EventCallback<ChangeEvent<bool>>> _radioHandlers
-            = new Dictionary<RadioButton, EventCallback<ChangeEvent<bool>>>();
 
         // ─── INPUT / DROPDOWN HELPERS ───────────────────────────────────────
 
@@ -845,7 +881,7 @@ namespace Showcase.Runtime
 
         static void Stamp(VisualElement el, TouchedProperty prop, Color value)
         {
-            if (el == null) return;
+            if (el == null || _current == null) return;
             switch (prop)
             {
                 case TouchedProperty.Background:        el.style.backgroundColor = value; break;
@@ -859,18 +895,18 @@ namespace Showcase.Runtime
                 case TouchedProperty.Color:             el.style.color = value; break;
                 case TouchedProperty.UnityBgTint:       el.style.unityBackgroundImageTintColor = value; break;
             }
-            if (!_touched.TryGetValue(el, out var set))
+            if (!_current.Touched.TryGetValue(el, out var set))
             {
                 set = new HashSet<TouchedProperty>();
-                _touched[el] = set;
+                _current.Touched[el] = set;
             }
             set.Add(prop);
         }
 
         static void InstallHover(VisualElement el, Color baseColor, Color hoverColor)
         {
-            if (_enterHandlers.TryGetValue(el, out var prevEnter)) el.UnregisterCallback(prevEnter);
-            if (_leaveHandlers.TryGetValue(el, out var prevLeave)) el.UnregisterCallback(prevLeave);
+            if (_current.Enter.TryGetValue(el, out var prevEnter)) el.UnregisterCallback(prevEnter);
+            if (_current.Leave.TryGetValue(el, out var prevLeave)) el.UnregisterCallback(prevLeave);
 
             Color baseCap  = baseColor;
             Color hoverCap = hoverColor;
@@ -894,8 +930,8 @@ namespace Showcase.Runtime
             };
             el.RegisterCallback(onEnter);
             el.RegisterCallback(onLeave);
-            _enterHandlers[el] = onEnter;
-            _leaveHandlers[el] = onLeave;
+            _current.Enter[el] = onEnter;
+            _current.Leave[el] = onLeave;
         }
 
         // ─── COLOR MAP ──────────────────────────────────────────────────────

@@ -151,6 +151,11 @@ namespace Showcase.Runtime
                 // are stale. The new tree starts at the design-system
                 // defaults, so reset the cache here before wiring.
                 _activeOverride = null;
+                CodigrateThemeApplier.ResetAll();   // drop dead-tree stamp registries
+                _flatRoot = root;
+                _themeToggleLocked = false;
+                _themeDropdownValue = DEFAULT_OPTION;
+                _themeStatusText = null;
 
                 ApplyMobileClass(root);
                 WirePromoLinks(root);
@@ -181,7 +186,150 @@ namespace Showcase.Runtime
             // we just created would miss the initial attach. Nudge it manually.
             // The runtime is idempotent; calling twice is a no-op.
             DesignSystemRuntime.AttachToAll();
+
+#if UNITY_6000_5_OR_NEWER
+            // World-space gallery mode + the switch that toggles into it. Only
+            // on 6000.5+, where PanelRenderer + world-space PanelSettings exist.
+            SetupWorldMode(showcaseDoc, overlayDoc, showcaseUxml, theme, themeOverride);
+#endif
         }
+
+#if UNITY_6000_5_OR_NEWER
+        // The live corridor, so the theme handlers can mirror the flat page's
+        // day/night / codigrate / random palette onto the exhibits.
+        static WorldSpaceCorridor _corridor;
+
+        // Build the world-space corridor + the mode switch and cross-wire them.
+        // The primary Screen/World switch is a band inserted into the page right
+        // below the hero; a matching exit lives in the in-corridor HUD (since the
+        // page — and its switch — are hidden while walking the gallery). The
+        // corridor builds its geometry lazily on first entry, so this is cheap.
+        static void SetupWorldMode(UIDocument showcaseDoc, UIDocument overlayDoc,
+                                   VisualTreeAsset showcaseUxml, ThemeStyleSheet theme, StyleSheet themeOverride)
+        {
+            var dsUss = Resources.Load<StyleSheet>("UI/Styles/DesignSystem/DesignSystem");
+
+            var corridor = WorldSpaceCorridor.Create(
+                showcaseDoc, overlayDoc, showcaseUxml, theme, dsUss, themeOverride);
+            _corridor = corridor;
+            // Wire each exhibit's CLONED controls (theme toggle, codigrate
+            // provider, randomize, drawers…) as its panel comes online — the
+            // corridor invokes this once per exhibit.
+            corridor.PanelReady = WireWorldExhibit;
+
+            var hudGO = new GameObject("ShowcaseModeHud");
+            var hudDoc = hudGO.AddComponent<UIDocument>();
+            hudDoc.panelSettings = MakePanelSettings(sortingOrder: 20, name: "HudPanelSettings", theme: theme);
+
+            Button screenBtn = null, worldBtn = null;
+            ShowcaseModeHud hud = null;
+
+            void Reflect(bool world)
+            {
+                screenBtn?.EnableInClassList("is-active", !world);
+                worldBtn?.EnableInClassList("is-active", world);
+                hud?.SetActive(world);
+            }
+            void SetMode(bool world)
+            {
+                if (world) corridor.Show();
+                else       corridor.Hide();
+                Reflect(world);
+            }
+
+            var (sBtn, wBtn) = BuildInPageModeToggle(showcaseDoc.rootVisualElement,
+                                                     () => SetMode(false), () => SetMode(true));
+            screenBtn = sBtn; worldBtn = wBtn;
+
+            hud = ShowcaseModeHud.Create(hudDoc, dsUss, onExit: () => SetMode(false));
+
+            // Esc in the corridor calls Hide() directly; mirror it onto the UI.
+            corridor.Hidden += () => Reflect(false);
+            Reflect(false);
+        }
+
+        // Insert the big segmented Screen/World switch as a page band directly
+        // below the hero banner (its first sibling in the .ds-root scroll view).
+        // Styled with the design system's own .ds-tabs / .ds-tab — the switch is
+        // built from the components it advertises.
+        static (Button screen, Button world) BuildInPageModeToggle(
+            VisualElement root, System.Action onScreen, System.Action onWorld)
+        {
+            if (root == null) return (null, null);
+            var scroll = root.Q<ScrollView>(className: "ds-root");
+            if (scroll == null || scroll.Q("mode-toggle-band") != null) return (null, null);
+
+            var band = new VisualElement { name = "mode-toggle-band" };
+            band.AddToClassList("showcase-chrome");   // sales chrome, not an inspectable component
+            band.style.alignItems = Align.Center;
+            band.style.paddingTop = 20; band.style.paddingBottom = 20;
+            band.style.paddingLeft = 24; band.style.paddingRight = 24;
+            band.style.borderBottomWidth = 1;
+            band.style.borderBottomColor = new Color(0.149f, 0.188f, 0.255f, 1f);
+
+            // Short + NoWrap: the long original wrapped to two lines on
+            // narrower windows, which read as broken chrome.
+            var caption = new Label("VIEW AS A FLAT PAGE OR WALK THE 3D GALLERY");
+            caption.AddToClassList("ds-caption");
+            caption.style.color = new Color(0.404f, 0.439f, 0.522f);
+            caption.style.unityTextAlign = TextAnchor.MiddleCenter;
+            caption.style.whiteSpace = WhiteSpace.NoWrap;
+            caption.style.marginBottom = 12;
+            band.Add(caption);
+
+            var tabs = new VisualElement();
+            tabs.AddToClassList("ds-tabs");
+            tabs.style.paddingTop = 5; tabs.style.paddingBottom = 5;
+            tabs.style.paddingLeft = 5; tabs.style.paddingRight = 5;
+
+            var screenBtn = MakeModeTab("Screen Space", onScreen);
+            var worldBtn  = MakeModeTab("World Space",  onWorld);
+            tabs.Add(screenBtn);
+            tabs.Add(worldBtn);
+            band.Add(tabs);
+
+            // Right after the hero (child 0 of the scroll content).
+            scroll.Insert(Mathf.Min(1, scroll.childCount), band);
+            return (screenBtn, worldBtn);
+        }
+
+        static Button MakeModeTab(string text, System.Action onClick)
+        {
+            var b = new Button(() => onClick?.Invoke()) { text = text };
+            b.AddToClassList("ds-tab");
+            b.style.paddingTop = 10; b.style.paddingBottom = 10;
+            b.style.paddingLeft = 22; b.style.paddingRight = 22;
+            b.style.fontSize = 14;
+            return b;
+        }
+
+        // Wire the CLONED interactive controls on one world exhibit so the
+        // corridor is fully live: theme toggle, codigrate theme provider,
+        // randomize, external link, drawer demos, auto-hide scroll. The
+        // harvested sections are a fresh UXML instantiation — none of the
+        // flat page's wiring reaches them. Q() by name only matches controls
+        // that exist on THIS exhibit's panel, so blanket-calling the full set
+        // per panel is safe (everything else no-ops). Called exactly once per
+        // exhibit by the corridor (the wired elements live in the persistent
+        // content tree, which survives panel reloads).
+        static void WireWorldExhibit(VisualElement panelRoot)
+        {
+            if (panelRoot == null) return;
+
+            WireThemeToggle(panelRoot);
+            WireThemeProvider(panelRoot);
+            WireCodigrateLink(panelRoot);
+            WireRandomize(panelRoot);
+            WireDrawerDemos(panelRoot);
+            WireAutoHideScroll(panelRoot);
+
+            // Stamp the canonical theme-control state onto the fresh clone so
+            // it doesn't disagree with choices made before it was built.
+            bool light = _flatRoot != null && _flatRoot.ClassListContains("theme-light");
+            MirrorThemeControls(panelRoot, light);
+            UpdateHexLabels(panelRoot, light);
+        }
+#endif
 
         static PanelSettings MakePanelSettings(int sortingOrder, string name, ThemeStyleSheet theme)
         {
@@ -282,14 +430,21 @@ namespace Showcase.Runtime
 
         // Wire the promo-banner buttons in DesignSystemShowcase.uxml to real
         // URLs. Application.OpenURL works in the WebGL build — clicking
-        // opens a new browser tab with the GitHub repo / Steam page.
+        // opens a new browser tab. Leap of Legends is live on all three
+        // stores (2026-07-05), so the old single "Wishlist" button is now a
+        // store-per-platform row.
         static void WirePromoLinks(VisualElement root)
         {
             if (root == null) return;
-            var gh = root.Q<Button>("promo-github");
-            if (gh != null) gh.clicked += () => Application.OpenURL("https://github.com/sinanata/unity-ui-document-design-system");
-            var st = root.Q<Button>("promo-steam");
-            if (st != null) st.clicked += () => Application.OpenURL("https://store.steampowered.com/app/2269500/");
+            void Wire(string name, string url)
+            {
+                var b = root.Q<Button>(name);
+                if (b != null) b.clicked += () => Application.OpenURL(url);
+            }
+            Wire("promo-github",    "https://github.com/sinanata/unity-ui-document-design-system");
+            Wire("promo-steam",     "https://store.steampowered.com/app/2269500/Leap_of_Legends/");
+            Wire("promo-appstore",  "https://apps.apple.com/us/app/leap-of-legends/id6761757484");
+            Wire("promo-playstore", "https://play.google.com/store/apps/details?id=com.exceptionly.leapoflegends");
         }
 
         // Hex pairs per swatch — first value is the dark-theme hex (matches
@@ -320,6 +475,16 @@ namespace Showcase.Runtime
         // but doesn't re-apply on subsequent toggle flips).
         static CodigrateThemeApplier.ColorMap _activeOverride;
 
+        // Canonical theme-control state, shared by the flat page and every
+        // world exhibit clone. Theme mutations can originate from ANY root
+        // (the flat page, the COLORS exhibit's toggle, the THEME PROVIDER
+        // exhibit's dropdown); these fields are what MirrorThemeControls
+        // stamps onto all the others so the clones never disagree.
+        static VisualElement _flatRoot;
+        static bool _themeToggleLocked;                       // codigrate palette active → day/night toggle disabled
+        static string _themeDropdownValue = DEFAULT_OPTION;   // provider dropdown selection
+        static string _themeStatusText;                       // provider status label text
+
         // Wire the day/night toggle in the COLORS section header. Adds /
         // removes the `theme-light` class on .ds-root; ShowcaseTheme.uss
         // redefines every colour token under that class, the universal
@@ -336,6 +501,64 @@ namespace Showcase.Runtime
         // toggle is `SetEnabled(false)` by WireThemeProvider, so this handler
         // only fires for legitimate user-driven swaps between the two
         // first-party token sets.
+        // Fan the CURRENT theme (light class + active override map) out to every
+        // surface: the flat page, the world exhibits' visuals (via the corridor),
+        // and the cloned theme CONTROLS on every root (toggle value + lock,
+        // provider dropdown selection, hex labels, status text). Theme mutations
+        // can originate from the flat page OR from a world exhibit clone —
+        // `sourceRoot` is whichever root the user interacted with; its own
+        // visuals were already written by the caller.
+        static void SyncThemeEverywhere(VisualElement sourceRoot)
+        {
+            if (sourceRoot == null) return;
+            bool light = sourceRoot.ClassListContains("theme-light");
+
+            if (_flatRoot != null && _flatRoot != sourceRoot)
+            {
+                ApplyThemeClass(_flatRoot, light);
+                if (_activeOverride != null) CodigrateThemeApplier.Apply(_flatRoot, _activeOverride);
+                else                         CodigrateThemeApplier.Revert(_flatRoot);
+                UpdateHexLabels(_flatRoot, light);
+            }
+            if (_flatRoot != null) MirrorThemeControls(_flatRoot, light);
+
+#if UNITY_6000_5_OR_NEWER
+            if (_corridor == null) return;
+            _corridor.ApplyScreenTheme(light, _activeOverride);   // class + palette per exhibit
+            foreach (var exhibitRoot in _corridor.ExhibitRoots)
+            {
+                if (exhibitRoot == null) continue;
+                if (exhibitRoot != sourceRoot) UpdateHexLabels(exhibitRoot, light);
+                MirrorThemeControls(exhibitRoot, light);
+            }
+#endif
+        }
+
+        // Align the theme CONTROLS on `root` with the canonical state. Uses
+        // SetValueWithoutNotify throughout — mirroring must never re-enter the
+        // mutation handlers.
+        static void MirrorThemeControls(VisualElement root, bool light)
+        {
+            var toggle = root.Q<Toggle>("theme-toggle");
+            if (toggle != null)
+            {
+                toggle.SetValueWithoutNotify(light);
+                toggle.SetEnabled(!_themeToggleLocked);
+            }
+
+            var dropdown = root.Q<DropdownField>("theme-provider-dropdown");
+            if (dropdown != null && _themeDropdownValue != null &&
+                dropdown.value != _themeDropdownValue &&
+                dropdown.choices != null && dropdown.choices.Contains(_themeDropdownValue))
+                dropdown.SetValueWithoutNotify(_themeDropdownValue);
+
+            if (_themeStatusText != null)
+            {
+                var status = root.Q<Label>("theme-provider-status");
+                if (status != null) status.text = _themeStatusText;
+            }
+        }
+
         static void WireThemeToggle(VisualElement root)
         {
             if (root == null) return;
@@ -346,6 +569,7 @@ namespace Showcase.Runtime
                 bool light = evt.newValue;
                 ApplyThemeClass(root, light);
                 UpdateHexLabels(root, light);
+                SyncThemeEverywhere(root);
             });
         }
 
@@ -435,32 +659,37 @@ namespace Showcase.Runtime
             dropdown.choices = new List<string> { DEFAULT_OPTION, RANDOM_OPTION };
             dropdown.index = 0;
 
-            if (status != null) status.text = "Loading codigrate themes…";
-
-            CodigrateThemeProvider.FetchList((list, error) =>
+            // The list is fetched once and shared: this method now also runs
+            // for the world exhibit's CLONE of the dropdown, and a second
+            // network fetch per clone would be wasted.
+            if (_codigrateListings != null)
             {
-                if (error != null || list == null)
+                PopulateDropdownChoices(dropdown);
+                if (status != null) status.text = $"{_codigrateListings.Count} themes by Codigrate available.";
+            }
+            else
+            {
+                if (status != null) status.text = "Loading codigrate themes...";
+                CodigrateThemeProvider.FetchList((list, error) =>
                 {
-                    if (status != null) status.text = "Codigrate themes unavailable. Random palette still works.";
-                    Debug.LogWarning($"[ShowcaseBootstrap] Codigrate list fetch failed: {error}");
-                    return;
-                }
+                    if (error != null || list == null)
+                    {
+                        if (status != null) status.text = "Codigrate themes unavailable. Random palette still works.";
+                        Debug.LogWarning($"[ShowcaseBootstrap] Codigrate list fetch failed: {error}");
+                        return;
+                    }
 
-                _codigrateListings = list;
-                var choices = new List<string> { DEFAULT_OPTION };
-                foreach (var l in list) choices.Add(l.Name);
-                choices.Add(RANDOM_OPTION);
-                dropdown.choices = choices;
-                // Preserve current value across the choices swap. If the user
-                // had Random selected at fetch time and we wiped it, the field
-                // would render empty even though _activeOverride is still set.
-                if (_activeOverride != null) dropdown.SetValueWithoutNotify(RANDOM_OPTION);
-                if (status != null) status.text = $"{list.Count} themes by Codigrate available.";
-            });
+                    _codigrateListings = list;
+                    PopulateDropdownChoices(dropdown);
+                    if (status != null) status.text = $"{list.Count} themes by Codigrate available.";
+                });
+            }
 
             dropdown.RegisterValueChangedCallback(evt =>
             {
                 var name = evt.newValue;
+                // Mirroring writes with SetValueWithoutNotify, so a change
+                // event here is always a real user pick on THIS dropdown.
                 if (name == DEFAULT_OPTION)
                 {
                     ClearOverride(root);
@@ -475,7 +704,7 @@ namespace Showcase.Runtime
                 var listing = _codigrateListings.Find(l => l.Name == name);
                 if (listing == null) return;
 
-                if (status != null) status.text = $"Loading {listing.Name}…";
+                if (status != null) status.text = $"Loading {listing.Name}...";
                 CodigrateThemeProvider.FetchPalette(listing, (palette, paletteError) =>
                 {
                     if (paletteError != null || palette == null)
@@ -490,10 +719,25 @@ namespace Showcase.Runtime
             });
         }
 
+        // Build the option list from the fetched listings and re-assert the
+        // canonical selection (assigning `choices` can blank the field).
+        static void PopulateDropdownChoices(DropdownField dropdown)
+        {
+            var choices = new List<string> { DEFAULT_OPTION };
+            foreach (var l in _codigrateListings) choices.Add(l.Name);
+            choices.Add(RANDOM_OPTION);
+            dropdown.choices = choices;
+            if (_themeDropdownValue != null && choices.Contains(_themeDropdownValue))
+                dropdown.SetValueWithoutNotify(_themeDropdownValue);
+        }
+
         static void ApplyCodigratePalette(VisualElement root, CodigrateThemeProvider.ThemePalette palette)
         {
             var map = CodigrateThemeApplier.FromCodigrate(palette);
             _activeOverride = map;
+            _themeToggleLocked = true;
+            _themeDropdownValue = palette.Name;
+            _themeStatusText = $"{palette.Name} · {palette.Appearance}";
 
             // Mirror the palette's reported appearance onto the day/night
             // toggle so any leftover USS state (e.g. the `.theme-light`
@@ -510,24 +754,35 @@ namespace Showcase.Runtime
 
             CodigrateThemeApplier.Apply(root, map);
             UpdateHexLabels(root, isLight);
+            SyncThemeEverywhere(root);
         }
 
         static void ClearOverride(VisualElement root)
         {
             _activeOverride = null;
+            _themeToggleLocked = false;
+            _themeDropdownValue = DEFAULT_OPTION;
+            _themeStatusText = _codigrateListings != null
+                ? $"{_codigrateListings.Count} themes by Codigrate available."
+                : null;
             CodigrateThemeApplier.Revert(root);
 
             var toggle = root.Q<Toggle>("theme-toggle");
             if (toggle != null) toggle.SetEnabled(true);
 
-            bool isLight = toggle != null && toggle.value;
-            // Refresh hex labels back to the design-system dictionary now that
+            // The interacted root may be the THEME PROVIDER exhibit, whose
+            // panel has no theme-toggle — fall back to the flat page's toggle
+            // for the current day/night mood.
+            bool isLight = toggle != null
+                ? toggle.value
+                : _flatRoot != null && _flatRoot.ClassListContains("theme-light");
+            // Re-assert the mood class on the interacted root (a codigrate
+            // palette may have left it in the other mood), then refresh hex
+            // labels back to the design-system dictionary now that
             // _activeOverride is null.
+            ApplyThemeClass(root, isLight);
             UpdateHexLabels(root, isLight);
-
-            var status = root.Q<Label>("theme-provider-status");
-            if (status != null && _codigrateListings != null)
-                status.text = $"{_codigrateListings.Count} themes by Codigrate available.";
+            SyncThemeEverywhere(root);
         }
 
         // Opens the public Codigrate theme catalogue. The link sits beside the
@@ -557,13 +812,22 @@ namespace Showcase.Runtime
         static void DoRandomize(VisualElement root)
         {
             var toggle = root.Q<Toggle>("theme-toggle");
-            bool isLight = toggle != null && toggle.value;
+            // Randomize can be triggered from the THEME PROVIDER exhibit,
+            // whose panel carries no theme-toggle — read the mood off the
+            // flat page in that case.
+            bool isLight = toggle != null
+                ? toggle.value
+                : _flatRoot != null && _flatRoot.ClassListContains("theme-light");
             var map = CodigrateThemeApplier.Randomize(isLight);
             _activeOverride = map;
+            _themeToggleLocked = false;   // randomize keeps the day/night toggle usable
+            _themeDropdownValue = RANDOM_OPTION;
+            _themeStatusText = "Random palette · click Randomize again to roll.";
 
             // Reflect the random state in the dropdown so the user can later
             // pick DEFAULT_OPTION to revert via the same mechanism that
-            // reverts a codigrate palette.
+            // reverts a codigrate palette. (MirrorThemeControls repeats this
+            // for every OTHER root.)
             var dropdown = root.Q<DropdownField>("theme-provider-dropdown");
             if (dropdown != null && dropdown.value != RANDOM_OPTION)
                 dropdown.SetValueWithoutNotify(RANDOM_OPTION);
@@ -573,11 +837,10 @@ namespace Showcase.Runtime
             // re-rolling builds the "try until you like it" loop.
             if (toggle != null) toggle.SetEnabled(true);
 
+            ApplyThemeClass(root, isLight);
             CodigrateThemeApplier.Apply(root, map);
             UpdateHexLabels(root, isLight);
-
-            var status = root.Q<Label>("theme-provider-status");
-            if (status != null) status.text = "Random palette · click Randomize again to roll.";
+            SyncThemeEverywhere(root);
         }
 
         // Hook the burger / close buttons in the three drawer demo sections to
