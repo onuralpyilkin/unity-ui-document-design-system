@@ -200,7 +200,8 @@ namespace DesignSystem.Runtime.Theme.Data
                         sb.AppendLine($"  {kv.Key}: {ColorToUss(col)};");
                         break;
                     case float f:
-                        sb.AppendLine($"  {kv.Key}: {f:F0}px;");
+                        var unit = kv.Key.Contains("transition") ? "ms" : "px";
+                        sb.AppendLine($"  {kv.Key}: {f:F0}{unit};");
                         break;
                 }
             }
