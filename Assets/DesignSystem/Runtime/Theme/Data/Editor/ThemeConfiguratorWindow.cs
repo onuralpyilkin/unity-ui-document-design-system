@@ -11,7 +11,7 @@ namespace DesignSystem.Runtime.Theme.Data.Editor
 {
     public class ThemeConfiguratorWindow : EditorWindow
     {
-        private const string SHOWCASE_UXML_GUID = "f9f3660311aca3d4d8db72ea09ae46a1";
+        private const string SHOWCASE_UXML_GUID = "ae1eea539fc84b67aee9a953483d8b42";
         private const double DEBOUNCE_DELAY = 0.15;
 
         private ThemeData _theme;
