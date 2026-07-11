@@ -32,6 +32,7 @@ namespace DesignSystem.Runtime.Theme.Data.Editor
         [MenuItem("Design System/Theme Configurator")]
         public static void Open() => GetWindow<ThemeConfiguratorWindow>("Theme Configurator");
 
+#if UNITY_6000_5_OR_NEWER
         [OnOpenAsset(1)]
         public static bool OnOpenAsset(EntityId entityId, int line)
         {
@@ -41,6 +42,17 @@ namespace DesignSystem.Runtime.Theme.Data.Editor
             window.LoadTheme(theme);
             return true;
         }
+#else
+        [OnOpenAsset(1)]
+        public static bool OnOpenAsset(int instanceId, int line)
+        {
+            var obj = EditorUtility.InstanceIDToObject(instanceId);
+            if (obj is not ThemeData theme) return false;
+            var window = GetWindow<ThemeConfiguratorWindow>();
+            window.LoadTheme(theme);
+            return true;
+        }
+#endif
 
         public void LoadTheme(ThemeData theme)
         {
