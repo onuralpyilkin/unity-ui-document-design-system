@@ -4,7 +4,7 @@ Guidance for AI coding agents (Codex, Cursor, GitHub Copilot, Claude Code, Winds
 
 ## What this project is
 
-A drop-in design system for **Unity 6 UI Toolkit** (UIDocument and PanelRenderer, UXML and USS). It ships design tokens, 24 components, 63 SVG icons, a one-class mobile flip, and a small auto-attaching C# runtime. Everything is themed dark and editable from a single stylesheet. Package id: `com.sinanata.designsystem`. License: MIT. The same components render on flat screens and, on Unity 6000.5+, on world-space `PanelRenderer` panels.
+A drop-in design system for **Unity 6 UI Toolkit** (UIDocument and PanelRenderer, UXML and USS). It ships design tokens, 24 components, 63 SVG icons, a one-class mobile flip, and a small auto-attaching C# runtime. Everything is themed dark and editable from a single stylesheet. Package id: `com.sinanata.designsystem`. License: MIT. The same components render on flat screens and, on Unity 6000.5+, in world space. Both `UIDocument` and `PanelRenderer` can host flat or world-space UI; the showcase uses `PanelRenderer` for its world-space gallery, and Unity now lists `UIDocument` under UI Toolkit > Legacy while keeping it fully supported (not `[Obsolete]`, still world-space capable). Prefer `PanelRenderer` for new work.
 
 ## Golden rules (do not violate)
 

@@ -216,6 +216,10 @@ DesignSystemRuntime.EnsureSkeletonShimmers(root);
 
 This avoids the one-frame "flat pill" flash on the very first appearance of a screen, while the periodic re-scan still picks up anything cloned later.
 
+### UIDocument vs PanelRenderer
+
+Both components host flat and world-space UI, and this runtime ships a backend for each: one for the traditional `UIDocument`, and one for `PanelRenderer` (Unity 6000.5+), Unity's newer native renderer that the showcase uses for its world-space gallery. As of 6000.5 Unity lists `UIDocument` under UI Toolkit > Legacy in the Add Component menu and recommends `PanelRenderer` for new work, but `UIDocument` is not marked `[Obsolete]`, compiles without warnings, keeps working with no removal planned, and still exposes the full world-space API (`worldSpaceSize`, `pivot`, `position`). Both backends stay first-class here: use `PanelRenderer` for new screens and world-space, and keep `UIDocument` for existing ones as long as you need it.
+
 ## What lives in C# vs USS
 
 The boundary is intentional:
