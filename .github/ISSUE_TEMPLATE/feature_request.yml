@@ -31,4 +31,4 @@ body:
   - type: markdown
     attributes:
       value: |
-        New icons must arrive as white-fill SVGs and new components must render in the showcase under the `ds-` BEM naming. See [CONTRIBUTING.md](https://github.com/sinanata/unity-ui-document-design-system/blob/main/CONTRIBUTING.md).
+        New icons must arrive as white-fill SVGs and new components must render in the showcase under the `ds-` BEM naming. See [CONTRIBUTING.md](https://github.com/sinanata/unity-ui-toolkit-design-system/blob/main/CONTRIBUTING.md).

@@ -46,7 +46,7 @@ The showcase gains a second mode: a walkable 3D gallery where all 29 sections ha
 
 - **`Assets/Showcase/Resources/DefaultPanelSettings.asset`** — pre-configured `PanelSettings` asset for the showcase. `ShowcaseBootstrap.MakePanelSettings` now tries `Resources.Load<PanelSettings>("DefaultPanelSettings")` and falls back to `ScriptableObject.CreateInstance<PanelSettings>()` if the asset is missing. This has been done because there must be at least one PanelSettings asset in project, otherwise ICU Data becames not available when advanced text option enabled in the Editor and on the builds Unity throws errors constantly and cuts the UI process.
 - **Editor menu: `Assets/Design System/Add Stylesheet To Selected Layout Asset`** — right-click any `.uxml` file in the Project window and the helper injects `<Style src="DesignSystem.uss">` inside the `<ui:UXML>` element. Validates that the selection is a UXML file, resolves `DesignSystem.uss` by GUID, checks for duplicate references (idempotent), regexes the style tag just after the opening `<ui:UXML ...>` line, then writes the updated template back to disk. Disabled (greyed out) when no UXML asset is selected. Lives in `EditorHelpers.cs`.
-- **Unity Package Manager integration** — `Assets/DesignSystem/package.json` (`com.sinanata.designsystem`) declares version, description, and Unity minimum version so the design system can be consumed as an immutable package via Git URL. `README.md` updated with Option C instructions: add `"com.sinanata.designsystem": "https://github.com/sinanata/unity-ui-document-design-system.git?path=/Assets/DesignSystem"` to `Packages/manifest.json`, or use the Package Manager window's "Add package from git URL..." dialog. Ideal for projects that prefer package-manager workflows and don't need to edit the system source.
+- **Unity Package Manager integration** — `Assets/DesignSystem/package.json` (`com.sinanata.designsystem`) declares version, description, and Unity minimum version so the design system can be consumed as an immutable package via Git URL. `README.md` updated with Option C instructions: add `"com.sinanata.designsystem": "https://github.com/sinanata/unity-ui-toolkit-design-system.git?path=/Assets/DesignSystem"` to `Packages/manifest.json`, or use the Package Manager window's "Add package from git URL..." dialog. Ideal for projects that prefer package-manager workflows and don't need to edit the system source.
 - **`[assembly: AlwaysLinkAssembly]`** in `Assets/DesignSystem/Runtime/AssemblyInfo.cs` — prevents Unity's managed-linker from stripping the `DesignSystem.Runtime` assembly in IL2CPP builds. Without it, `[RuntimeInitializeOnLoadMethod]` methods in the runtime can be stripped and the auto-attach registration never fires.
 - **`DesignSystem.Runtime.asmdef`** — assembly definition file giving the runtime folder its own assembly, isolating it from the rest of the project and making it referenceable by other asmdefs.
 - **`DesignSystemRuntimeBase<TComponent>`** — abstract base class replacing the single monolithic `DesignSystemRuntime`. Moves spinner rotation, toggle-knob injection, skeleton shimmer, drawer wiring, scroll auto-hide, and drag & drop wiring into one shared base. Two concrete child classes cover both Unity UI Toolkit backends:
@@ -82,7 +82,7 @@ The showcase gains a second mode: a walkable 3D gallery where all 29 sections ha
 
 ## [1.4.0] — 2026-05-16
 
-External theme-provider integration: the live showcase can now load any of [Codigrate](https://codigrate.com)'s 12 IDE themes (Sequoia, Sakura, Roraima, Autumn, Aurora Borealis, Everest, Tokyo, Tallinn, Istanbul, Miami, Rio de Janeiro, Paris) at runtime and re-skin the whole tree to match, plus a `Randomize colors` button that generates plausible HSV-driven palettes for try-until-you-like-it exploration. The day / night toggle is suppressed while a third-party palette is active — codigrate carries its own `"appearance": "light" | "dark"` field — and re-enabled when you select `Design System default` from the dropdown again. Same showcase URL — `https://sinanata.github.io/unity-ui-document-design-system/` — refresh to see.
+External theme-provider integration: the live showcase can now load any of [Codigrate](https://codigrate.com)'s 12 IDE themes (Sequoia, Sakura, Roraima, Autumn, Aurora Borealis, Everest, Tokyo, Tallinn, Istanbul, Miami, Rio de Janeiro, Paris) at runtime and re-skin the whole tree to match, plus a `Randomize colors` button that generates plausible HSV-driven palettes for try-until-you-like-it exploration. The day / night toggle is suppressed while a third-party palette is active — codigrate carries its own `"appearance": "light" | "dark"` field — and re-enabled when you select `Design System default` from the dropdown again. Same showcase URL — `https://sinanata.github.io/unity-ui-toolkit-design-system/` — refresh to see.
 
 ### Added
 
@@ -126,7 +126,7 @@ External theme-provider integration: the live showcase can now load any of [Codi
 
 ## [1.3.0] — 2026-05-08
 
-Burger panels and drawers ship as a first-class component, in response to [issue #1](https://github.com/sinanata/unity-ui-document-design-system/issues/1). One `.ds-drawer` class with composable direction (`top` / `right` / `bottom` / `left`) and mode (`overlay` / `push`) modifiers covers both transition styles called out in the issue: top-to-down growing-overlay, and left-to-right growing-overlay-with-shrinking-siblings. Auto-hiding scrollbar lands as a one-class `:hover` modifier with a touch-friendly runtime helper. Showcase has four new live demos at the bottom of the page — same URL, refresh to see.
+Burger panels and drawers ship as a first-class component, in response to [issue #1](https://github.com/sinanata/unity-ui-toolkit-design-system/issues/1). One `.ds-drawer` class with composable direction (`top` / `right` / `bottom` / `left`) and mode (`overlay` / `push`) modifiers covers both transition styles called out in the issue: top-to-down growing-overlay, and left-to-right growing-overlay-with-shrinking-siblings. Auto-hiding scrollbar lands as a one-class `:hover` modifier with a touch-friendly runtime helper. Showcase has four new live demos at the bottom of the page — same URL, refresh to see.
 
 ### Added
 
@@ -159,7 +159,7 @@ Burger panels and drawers ship as a first-class component, in response to [issue
 
 ## [1.2.0] — 2026-05-05
 
-HiDPI sizing fix for the live web showcase (Retina Macs, iPhones, iPads were rendering every component at 1/DPR of its declared size), mobile-narrow heading wrap, themed + crisp dropdown popup, and keyboard + gamepad navigation through the Unity Input System. Same showcase URL — `https://sinanata.github.io/unity-ui-document-design-system/` — refresh to see the new build.
+HiDPI sizing fix for the live web showcase (Retina Macs, iPhones, iPads were rendering every component at 1/DPR of its declared size), mobile-narrow heading wrap, themed + crisp dropdown popup, and keyboard + gamepad navigation through the Unity Input System. Same showcase URL — `https://sinanata.github.io/unity-ui-toolkit-design-system/` — refresh to see the new build.
 
 ### Added
 
@@ -194,11 +194,11 @@ HiDPI sizing fix for the live web showcase (Retina Macs, iPhones, iPads were ren
 
 ## [1.1.0] — 2026-05-04
 
-The repo is now both a drop-in design-system folder AND a buildable Unity project. Open it directly in Unity Hub, or copy `Assets/DesignSystem/` into your existing project as before. New live web demo at https://sinanata.github.io/unity-ui-document-design-system/ with hover-to-inspect selector chains, day / night theme toggle, and a slim styled scrollbar throughout.
+The repo is now both a drop-in design-system folder AND a buildable Unity project. Open it directly in Unity Hub, or copy `Assets/DesignSystem/` into your existing project as before. New live web demo at https://sinanata.github.io/unity-ui-toolkit-design-system/ with hover-to-inspect selector chains, day / night theme toggle, and a slim styled scrollbar throughout.
 
 ### Added
 
-- **Live web showcase** at `https://sinanata.github.io/unity-ui-document-design-system/`. Unity 6 WebGL build of `DesignSystemShowcase.uxml` with a custom WebGL template (`viewport-fit: cover`, `touch-action: none`, full-bleed canvas, dark loading bar) for desktop + mobile interactivity.
+- **Live web showcase** at `https://sinanata.github.io/unity-ui-toolkit-design-system/`. Unity 6 WebGL build of `DesignSystemShowcase.uxml` with a custom WebGL template (`viewport-fit: cover`, `touch-action: none`, full-bleed canvas, dark loading bar) for desktop + mobile interactivity.
 - **`Tools/Build/`** — local-only Windows build pipeline. No cloud, no Unity license secret.
     - `Build-Showcase.ps1` — orchestrator. `-Serve` runs a local HTTP server on the build output; `-Deploy` force-pushes to a `gh-pages` orphan branch via `git worktree`. Mirrors the production-tested Leap of Legends `Build-All.ps1` pattern: Unity process-tree cleanup on Ctrl+C, stale `Temp/UnityLockfile` removal, live phase progress from `DisplayProgressbar:` log markers, JSON build report, Burst-cache auto-retry, native NTSTATUS crash labels.
     - `Deploy-GhPages.ps1` — single-commit force-push to `gh-pages` via detached `git worktree`. The branch always contains exactly one commit, so the public repo doesn't accumulate ~10 MB build artefacts per deploy.

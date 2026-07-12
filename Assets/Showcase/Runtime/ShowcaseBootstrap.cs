@@ -441,7 +441,7 @@ namespace Showcase.Runtime
                 var b = root.Q<Button>(name);
                 if (b != null) b.clicked += () => Application.OpenURL(url);
             }
-            Wire("promo-github",    "https://github.com/sinanata/unity-ui-document-design-system");
+            Wire("promo-github",    "https://github.com/sinanata/unity-ui-toolkit-design-system");
             Wire("promo-steam",     "https://store.steampowered.com/app/2269500/Leap_of_Legends/");
             Wire("promo-appstore",  "https://apps.apple.com/us/app/leap-of-legends/id6761757484");
             Wire("promo-playstore", "https://play.google.com/store/apps/details?id=com.exceptionly.leapoflegends");

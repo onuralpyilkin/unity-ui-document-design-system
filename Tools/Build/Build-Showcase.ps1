@@ -36,7 +36,7 @@ if (-not (Test-Path $Orch)) {
 
 & $Orch -Title       "UI Toolkit Design System - Showcase Build" `
         -UnityMethod "UIDocumentDesignSystem.BuildTools.BuildCli.BuildWebGL" `
-        -LiveUrl     "https://sinanata.github.io/unity-ui-document-design-system/" `
+        -LiveUrl     "https://sinanata.github.io/unity-ui-toolkit-design-system/" `
         -RepoRoot    $RepoRoot `
         -ConfigPath  $ConfigPath `
         @args

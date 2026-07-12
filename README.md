@@ -2,9 +2,9 @@
 
 [![Unity](https://img.shields.io/badge/Unity-6000.0%2B-black?logo=unity&logoColor=white)](https://unity.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Live demo](https://img.shields.io/badge/demo-live-22C55E)](https://sinanata.github.io/unity-ui-document-design-system/)
+[![Live demo](https://img.shields.io/badge/demo-live-22C55E)](https://sinanata.github.io/unity-ui-toolkit-design-system/)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![Stars](https://img.shields.io/github/stars/sinanata/unity-ui-document-design-system?logo=github)](https://github.com/sinanata/unity-ui-document-design-system/stargazers)
+[![Stars](https://img.shields.io/github/stars/sinanata/unity-ui-toolkit-design-system?logo=github)](https://github.com/sinanata/unity-ui-toolkit-design-system/stargazers)
 
 A drop-in **design system for Unity 6 UI Toolkit** (UIDocument/PanelRenderer + UXML + USS). Tokens, components, icons, mobile responsiveness, and a runtime helper — all themed dark, all keyboard-and-touch-ready, all editable from one stylesheet. Works both on flat screens and, on Unity 6000.5+, in world space: the same components render on 3D surfaces, and the live showcase ships a walkable world-space gallery to prove it. Open-sourced as part of a small giving-back set of Unity tools — alongside the [Voronoi mesh fracturer](https://github.com/sinanata/unity-mesh-fracture), the [3D-to-sprite baker](https://github.com/sinanata/unity-3d-to-sprite-baker), the [prefab-thumbnail renderer](https://github.com/sinanata/unity-prefab-thumbnail-renderer), and the [cross-platform build orchestrator](https://github.com/sinanata/unity-cross-platform-local-build-orchestrator).
 
@@ -35,9 +35,9 @@ Built for and battle-tested in <strong><a href="https://leapoflegends.com">Leap 
 
 ## Live showcase
 
-[![UI Toolkit Design System — interactive web showcase. Hover or tap to inspect, toggle day/night, click classes to copy.](docs/screenshots/design_system_showcase.gif)](https://sinanata.github.io/unity-ui-document-design-system/)
+[![UI Toolkit Design System — interactive web showcase. Hover or tap to inspect, toggle day/night, click classes to copy.](docs/screenshots/design_system_showcase.gif)](https://sinanata.github.io/unity-ui-toolkit-design-system/)
 
-**[Open the interactive web demo →](https://sinanata.github.io/unity-ui-document-design-system/)** (click the gif, too)
+**[Open the interactive web demo →](https://sinanata.github.io/unity-ui-toolkit-design-system/)** (click the gif, too)
 
 Hover (desktop) or tap (mobile) any component to surface its **selector chain** — every parent class on the way down to the leaf, plus the leaf's class list ready to copy. Click the classes line to copy to clipboard. Toggle day / night in the COLORS section header and the whole tree retheme over 240 ms via the var() cascade. Slim themed scrollbar throughout, mobile flip below 768 px.
 
@@ -48,7 +48,7 @@ Hover (desktop) or tap (mobile) any component to surface its **selector chain** 
 Build the demo locally any time:
 
 ```powershell
-git clone --recurse-submodules https://github.com/sinanata/unity-ui-document-design-system
+git clone --recurse-submodules https://github.com/sinanata/unity-ui-toolkit-design-system
 # or, after a plain clone: git submodule update --init --recursive
 .\Tools\Build\Build-Showcase.ps1 -Serve
 ```
@@ -117,7 +117,7 @@ your-unity-project/
 
 ```powershell
 # From your Unity project root, on Windows or macOS:
-git clone https://github.com/sinanata/unity-ui-document-design-system ../design-system-src
+git clone https://github.com/sinanata/unity-ui-toolkit-design-system ../design-system-src
 cp -r ../design-system-src/Assets/DesignSystem Assets/DesignSystem
 ```
 
@@ -127,19 +127,19 @@ The submodule must live **outside** `Assets/` and the drop-in folder gets linked
 
 ```bash
 cd your-unity-project
-git submodule add https://github.com/sinanata/unity-ui-document-design-system Vendor/unity-ui-document-design-system
+git submodule add https://github.com/sinanata/unity-ui-toolkit-design-system Vendor/unity-ui-toolkit-design-system
 ```
 
 Then create an OS-level link from `Assets/DesignSystem` to the vendored copy:
 
 ```powershell
 # Windows — directory junction (no admin / Developer Mode required)
-cmd /c mklink /J Assets\DesignSystem Vendor\unity-ui-document-design-system\Assets\DesignSystem
+cmd /c mklink /J Assets\DesignSystem Vendor\unity-ui-toolkit-design-system\Assets\DesignSystem
 ```
 
 ```bash
 # macOS / Linux — symbolic link
-ln -s ../Vendor/unity-ui-document-design-system/Assets/DesignSystem Assets/DesignSystem
+ln -s ../Vendor/unity-ui-toolkit-design-system/Assets/DesignSystem Assets/DesignSystem
 ```
 
 Add the link itself to your `.gitignore` so each contributor re-creates it after their first clone (the link path is per-OS and per-clone state — junctions can't roundtrip through git, and symlinks don't roundtrip cleanly across Windows / *nix):
@@ -160,14 +160,14 @@ Unity's Package Manager supports Git URLs directly. Add the design system as a p
   ```json
   {
     "dependencies": {
-      "com.sinanata.designsystem": "https://github.com/sinanata/unity-ui-document-design-system.git?path=/Assets/DesignSystem"
+      "com.sinanata.designsystem": "https://github.com/sinanata/unity-ui-toolkit-design-system.git?path=/Assets/DesignSystem"
     }
   }
   ```
 
 - **Or use the Package Manager window:** go to **Window → Package Manager → ＋ → "Add package from git URL..."** and paste:
   ```
-  https://github.com/sinanata/unity-ui-document-design-system.git?path=/Assets/DesignSystem
+  https://github.com/sinanata/unity-ui-toolkit-design-system.git?path=/Assets/DesignSystem
   ```
 
 This installs the design system as an immutable package under `Packages/com.sinanata.designsystem/` — ideal for projects that prefer package-manager workflows and don't need to edit the system source.

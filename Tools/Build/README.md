@@ -15,8 +15,8 @@ submodule with this repo's title, batchmode method, and live URL.
 ## First-run setup
 
 ```powershell
-git clone --recurse-submodules https://github.com/sinanata/unity-ui-document-design-system
-cd unity-ui-document-design-system
+git clone --recurse-submodules https://github.com/sinanata/unity-ui-toolkit-design-system
+cd unity-ui-toolkit-design-system
 copy Tools\Build\config.example.json Tools\Build\config.local.json
 # Edit unity.windowsEditorPath if Unity isn't in C:\Program Files\Unity\Hub\Editor\6000.3.8f1\
 ```
@@ -50,10 +50,10 @@ Hardening (defensive checks, Burst-AOT cache auto-retry, native-crash labelling,
 
 After the first `-Deploy` push:
 
-1. https://github.com/sinanata/unity-ui-document-design-system → **Settings** → **Pages**.
+1. https://github.com/sinanata/unity-ui-toolkit-design-system → **Settings** → **Pages**.
 2. Source: **Deploy from a branch**.
 3. Branch: **`gh-pages`**, folder: **`/ (root)`**.
-4. Save. URL: https://sinanata.github.io/unity-ui-document-design-system/
+4. Save. URL: https://sinanata.github.io/unity-ui-toolkit-design-system/
 
 ## Files in this folder
 

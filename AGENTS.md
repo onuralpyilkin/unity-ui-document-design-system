@@ -16,7 +16,7 @@ A drop-in design system for **Unity 6 UI Toolkit** (UIDocument and PanelRenderer
 
 ## Use the design system in your project
 
-1. Install one of three ways (README, "Installation"): copy `Assets/DesignSystem/` into your project, add it as a git submodule plus an OS-level link, or add the UPM git URL `https://github.com/sinanata/unity-ui-document-design-system.git?path=/Assets/DesignSystem`.
+1. Install one of three ways (README, "Installation"): copy `Assets/DesignSystem/` into your project, add it as a git submodule plus an OS-level link, or add the UPM git URL `https://github.com/sinanata/unity-ui-toolkit-design-system.git?path=/Assets/DesignSystem`.
 2. Attach the master stylesheet to your UIDocument's UXML and put `ds-root` on the top element:
    ```xml
    <Style src="project://database/Assets/DesignSystem/Resources/UI/Styles/DesignSystem/DesignSystem.uss" />

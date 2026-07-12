@@ -12,8 +12,8 @@ authors:
   - given-names: Sinan
     family-names: Ata
     website: "https://x.com/sinanata"
-repository-code: "https://github.com/sinanata/unity-ui-document-design-system"
-url: "https://sinanata.github.io/unity-ui-document-design-system/"
+repository-code: "https://github.com/sinanata/unity-ui-toolkit-design-system"
+url: "https://sinanata.github.io/unity-ui-toolkit-design-system/"
 license: MIT
 version: "1.4.2"
 date-released: "2026-07-05"
