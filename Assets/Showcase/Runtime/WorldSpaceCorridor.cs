@@ -253,7 +253,7 @@ namespace Showcase.Runtime
             if (_themeLight) root.AddToClassList("theme-light");
             else             root.RemoveFromClassList("theme-light");
             // Mirror onto the panel's visualTree too: dropdown popups attach
-            // there (sibling of root), and ShowcaseDropdownPopup.uss keys its
+            // there (sibling of root), and DropdownPopup.uss keys its
             // light-theme block off an ancestor .theme-light class.
             var panelScope = root.panel?.visualTree;
             if (panelScope != null && panelScope != root)
@@ -368,7 +368,7 @@ namespace Showcase.Runtime
             _baseMaterial = ResolveBaseMaterial();
             _plateMat = MakeMat(C_PLATE, 0.2f);
             _focusRingUss = Resources.Load<StyleSheet>("ShowcaseFocusRing");
-            _popupUss = Resources.Load<StyleSheet>("ShowcaseDropdownPopup");
+            _popupUss = Resources.Load<StyleSheet>("UI/Styles/DesignSystem/DropdownPopup");
             _cam = Camera.main;
             if (_cam == null)
             {
@@ -928,7 +928,7 @@ namespace Showcase.Runtime
             public StyleSheet Ds;
             public StyleSheet Theme;
             public StyleSheet Focus;    // ShowcaseFocusRing — keyboard focus parity with the flat page
-            public StyleSheet Popup;    // ShowcaseDropdownPopup — see OnReload, panel-scope attach
+            public StyleSheet Popup;    // DropdownPopup — see OnReload, panel-scope attach
             public PanelEventHandler Handler;
 
             public bool WantsPlate;

@@ -71,3 +71,41 @@
     letter-spacing: 1px;
     margin-bottom: var(--space-3);
 }
+
+/* ---------- Wrap control ----------
+   Every prose class above sets `white-space: normal`, which is right for a
+   paragraph and WRONG for the short fixed labels that make up most of a UI:
+   a slot name, a stat value, a menu entry, a badge.
+
+   The reason it bites is flexbox, not typography. Inside a `flex-direction:
+   row`, a Label is `flex-shrink: 1` like everything else, so when the row is
+   tight Yoga shrinks the LABEL rather than the fixed-size siblings next to
+   it — and a `white-space: normal` Label that has been shrunk below its text
+   width does not overflow the way a browser would. It wraps, and if the box
+   is narrower than the word, it wraps MID-WORD. That is where "Armor" renders
+   as "Armo / r" under a 56px icon: nothing is overflowing, the label just
+   volunteered to be 30px wide.
+
+   So: prose wraps, labels do not.
+
+     .ds-nowrap    one line, and refuse to be shrunk. Use on ANY label sitting
+                   in a row next to a fixed-size element (icon, slot, avatar,
+                   value column). This is the fix for mid-word wrapping.
+     .ds-truncate  one line, take the space you're given, ellipsize the rest.
+                   Use where the text is user data of unknown length (an item
+                   name, a player name) and the column width is what matters.
+                   Needs a bounded width to ellipsize against — it shrinks.
+
+   Neither belongs on a paragraph. A quest description, a tooltip body or a
+   death-screen blurb wants `white-space: normal` and room to breathe. */
+.ds-nowrap {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.ds-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 1;
+}

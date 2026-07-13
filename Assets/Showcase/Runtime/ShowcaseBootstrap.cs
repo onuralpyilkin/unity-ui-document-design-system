@@ -141,7 +141,7 @@ namespace Showcase.Runtime
                 var panelRoot = root.parent;
                 if (panelRoot != null)
                 {
-                    var popupChrome = Resources.Load<StyleSheet>("ShowcaseDropdownPopup");
+                    var popupChrome = Resources.Load<StyleSheet>("UI/Styles/DesignSystem/DropdownPopup");
                     if (popupChrome != null && !panelRoot.styleSheets.Contains(popupChrome))
                         panelRoot.styleSheets.Add(popupChrome);
                 }

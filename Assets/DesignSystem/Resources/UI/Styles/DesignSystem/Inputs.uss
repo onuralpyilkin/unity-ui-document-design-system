@@ -291,10 +291,17 @@
    GenericDropdownMenu under `m_TargetElement.GetRootVisualContainer()` —
    a SIBLING of the UXML rootVisualElement, NOT a descendant. Stylesheets
    imported via the UXML's `<Style>` tag scope to the rootVisualElement
-   subtree only, so popup rules placed here never reached the popup.
-   The showcase ships popup styling in a separate stylesheet
-   (`Showcase/Resources/ShowcaseDropdownPopup.uss`) loaded at panel-root
-   scope by `ShowcaseBootstrap`. */
+   subtree only, so popup rules placed here can never reach the popup.
+   Popup chrome therefore ships as its OWN sheet, `DropdownPopup.uss`, which
+   the HOST attaches at panel scope (see that file's header). It is
+   deliberately not @imported into DesignSystem.uss: importing it here would
+   attach it at ds-root scope, where it still would not match. A host that
+   forgets the attach gets an unstyled Unity-grey popup — nothing a screen
+   author can fix from UXML.
+
+   AUTHORING: pre-select with `index`, NOT `value`. `DropdownField.value` is
+   not a UXML attribute — Unity ignores it and the field renders BLANK.
+       <ui:DropdownField choices="Low,Medium,High" index="2" class="ds-dropdown"/> */
 
 /* ---------- Textarea ---------- */
 .ds-textarea {

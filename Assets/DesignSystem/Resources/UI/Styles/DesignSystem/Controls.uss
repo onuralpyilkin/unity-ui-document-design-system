@@ -320,6 +320,108 @@
     margin-bottom: var(--space-2);
 }
 
+/* ---------- Meter — the game bar (health, mana, XP, stamina, shield) ----------
+   `.ds-progress` is an 8px app-chrome bar and hides its title outright. A game
+   bar is a different component: thick enough to read a number ON, with the
+   number centred over the fill.
+
+   Use this. Do NOT hand-roll it, because the obvious hand-roll is broken and
+   looks fine in the markup:
+
+       .xp-track { height: 12px; overflow: hidden; }     <- clips at 12px
+       .xp-text  { position: absolute; top: -2px; }      <- text is ~14px tall
+
+   The label is taller than the track that clips it, so you ship a bar with the
+   top two pixels of some text peeking out of it. A meter is sized around its
+   label instead — 20px default, and the label is a plain flow child, so it
+   cannot be clipped by construction.
+
+   DOM (the label is a SIBLING of the fill, and comes AFTER it):
+     <VisualElement class="ds-meter">
+       <VisualElement name="hp-fill" class="ds-meter__fill" style="width: 76%;"/>
+       <Label text="184 / 240" class="ds-meter__label"/>
+     </VisualElement>
+
+   Sibling, not child: a Label inside the fill is clipped to the fill's width
+   and slides around as the value changes. After, not before: UI Toolkit has no
+   z-index — later in the DOM paints on top, and that is the ONLY way to put
+   the text over the fill.
+
+   Sizes: --sm (10px, no label — a status pip), default (20px), --lg (24px).
+   A HUD bar is 20px. It is not 40px: at 40px with a `ds-h3` number on it, two
+   of them own a quarter of the player's screen. Reach for --lg only for a
+   boss bar or a full-width cast bar. */
+.ds-meter {
+    height: 20px;
+    min-height: 20px;
+    background-color: var(--color-surface-elev);
+    border-radius: var(--radius-pill-10);
+    border-width: var(--border-thin);
+    border-color: var(--color-border);
+    overflow: hidden;
+    justify-content: center;
+}
+/* The fill carries its OWN pill radius, matching the track. It does NOT lean on the track's
+   `overflow: hidden` to cut its corners, and neither does `.ds-progress` (whose fill rounds itself
+   for exactly this reason). Do not delete this and trust the clip instead:
+
+   INSIDE A WORLD-SPACE PanelRenderer PANEL, `overflow: hidden` CLIPS TO THE RECTANGLE AND IGNORES
+   THE BORDER-RADIUS. Screen space honours the radius, so a square-cornered fill looks perfect on the
+   flat page and is indistinguishable from a self-rounded one. It is the same component in the 3D
+   gallery that gives it away: the track's cap is a HALF-CIRCLE (radius = half the height), so the
+   fill's square corners hang out past the curve and the bar reads as overflowing to the left.
+
+   Rounding the fill is SHAPE, not clipping, so it survives both hosts. Rectangular clips are fine in
+   world space (the drawers rely on one), it is only the rounding that is dropped, so any child that
+   has to reach a ROUNDED parent's edge must round itself. See also `.ds-animal-detail__hero`.
+
+   The radius is one step below the track's because the fill is inset by the track's 1px border:
+   a 20px track holds an 18px fill, so its half-height is 9, not 10. */
+.ds-meter__fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: var(--color-primary);
+    border-radius: var(--radius-pill-9);   /* 18px tall inside the track's 1px border */
+    transition-property: width, background-color;
+    transition-duration: var(--transition-medium);
+}
+/* Zeroing the box is not cosmetic here. Unity's Label ships a 1px default margin and measures a line
+   box taller than its glyphs (same reason `.ds-chip > .unity-label` zeroes its own), and this label
+   lives inside a 20px `overflow: hidden` track — leave the margin on and the meter clips the very
+   text it exists to show, which is the exact failure this component replaces. */
+.ds-meter__label,
+.ds-meter > .unity-label {
+    -unity-text-align: middle-center;
+    font-size: var(--font-size-caption);
+    -unity-font-style: bold;
+    color: var(--color-text-on-accent);
+    white-space: nowrap;
+    margin: 0;
+    padding: 0;
+}
+
+.ds-meter--sm { height: 10px; min-height: 10px; border-radius: var(--radius-pill-5); }
+.ds-meter--lg { height: 24px; min-height: 24px; border-radius: var(--radius-pill-12); }
+.ds-meter--lg .ds-meter__label { font-size: var(--font-size-body-2); }
+
+/* Every size re-rounds its fill to the track it sits in, one step down for the 1px border. */
+.ds-meter--sm .ds-meter__fill { border-radius: var(--radius-pill-4); }   /* 8px tall  */
+.ds-meter--lg .ds-meter__fill { border-radius: var(--radius-pill-11); }  /* 22px tall */
+
+/* Fill colour: pick the ROLE, don't restate the hex. */
+.ds-meter--secondary .ds-meter__fill { background-color: var(--color-secondary); }
+.ds-meter--tertiary  .ds-meter__fill { background-color: var(--color-tertiary); }
+.ds-meter--warning   .ds-meter__fill { background-color: var(--color-warning); }
+.ds-meter--danger    .ds-meter__fill { background-color: var(--color-danger); }
+
+/* Live states — flip these from game code as a value crosses a threshold.
+   Declared after the modifiers so `is-danger` wins on a `--secondary` meter. */
+.ds-meter .ds-meter__fill.is-warning { background-color: var(--color-warning); }
+.ds-meter .ds-meter__fill.is-danger  { background-color: var(--color-danger); }
+
 /* ---------- Scrollbars ----------
    Slim 8px scrollbar with a pill thumb, no arrow buttons. Scoped to
    `.ds-root` so the rules don't leak into editor tools or other UI

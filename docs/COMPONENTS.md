@@ -9,7 +9,7 @@ One-line summary per component class. The showcase UXML (`Assets/DesignSystem/Re
 | `.ds-root` | Topmost element of any screen. Cascades the tokens and paints `--color-bg` edge to edge. |
 | `.ds-root--hud` | Compose with `.ds-root` for UI that floats **over gameplay** — transparent background, content-sized. |
 
-Every screen needs `ds-root`: it is what makes `var(--...)` resolve and what scopes the scrollbar, focus-ring and transition families. But it also paints an opaque background, which is right for a full-screen menu and wrong for a health bar. A HUD, a minimap, a crosshair, a damage vignette — anything the game world must show through — carries `class="ds-root ds-root--hud"`.
+Every screen needs `ds-root`: it is the scope the rest of the system hangs off — the text ramp, plus the scrollbar, focus-ring and transition families, which all select through it. (The tokens themselves are declared in a `:root` block in `DesignTokens.uss`; they cascade from the topmost element, which is where `ds-root` goes.) But `ds-root` also paints an opaque background, which is right for a full-screen menu and wrong for a health bar. A HUD, a minimap, a crosshair, a damage vignette — anything the game world must show through — carries `class="ds-root ds-root--hud"`.
 
 ## Buttons
 
@@ -53,6 +53,28 @@ DOM:
 
 Set placeholders via `field.textEdition.placeholder = "..."` in C#. Unity 6's API supports `hidePlaceholderOnFocus = true` to clear on focus.
 
+### Dropdowns: pre-select with `index`, never `value`
+
+```xml
+<ui:DropdownField choices="Low,Medium,High,Ultra" index="3" class="ds-dropdown"/>
+```
+
+`DropdownField.value` is **not a UXML attribute**. Unity ignores it without a word and the field renders **blank** — the single most common way a Settings screen ships with empty dropdowns. `index` is zero-based and must be a valid position in `choices`.
+
+### Dropdowns: the popup needs a host-side attach
+
+The open menu (`unity-base-dropdown__*`) is parented by Unity as a **sibling of `.ds-root`**, not a descendant. Stylesheets a UXML `<Style>` tag imports scope to that UXML's subtree, so **no design-system rule can reach the popup** and no markup a screen author writes will change that. Popup chrome therefore ships as its own sheet, which the **host** attaches at panel scope, once per `UIDocument`, after the first layout pass:
+
+```csharp
+var panelScope = doc.rootVisualElement.parent
+              ?? doc.rootVisualElement.panel?.visualTree;
+var popup = Resources.Load<StyleSheet>("UI/Styles/DesignSystem/DropdownPopup");
+if (panelScope != null && popup != null && !panelScope.styleSheets.Contains(popup))
+    panelScope.styleSheets.Add(popup);
+```
+
+Every panel needs its own attach — a world-space UI is one panel **per quad**, not one for the scene. Skip it and dropdowns open Unity-grey with chunky default scrollbars. This is a host responsibility, not a screen bug.
+
 ## Tabs & filters
 
 | Class | Use |
@@ -95,8 +117,42 @@ A tab strip on its own is a filter row — it styles state and you drive the fil
 | `.ds-slider` | Single-value `<Slider>`; thumb cross-centred via `margin-top: -9px`. |
 | `.ds-slider--filled` | Variant that highlights the filled portion. |
 | `.ds-range` | `<MinMaxSlider>`; tracker, dragger, and both thumbs cross-centred via `top: 50%; margin-top: -<half>px;`. |
-| `.ds-progress` | `<ProgressBar>`; 8 px tall by default. |
+| `.ds-progress` | `<ProgressBar>`; 8 px tall by default. Title hidden — app chrome, not a game bar. |
 | `.ds-progress-row` | Wrapper that adds a head row with title + percentage. |
+
+## Meters (health, mana, XP, stamina)
+
+A game bar is not `.ds-progress`. It is thick enough to read a number **on**, and the number is centred over the fill.
+
+| Class | Use |
+| --- | --- |
+| `.ds-meter` | The bar. 20 px — the HUD default. |
+| `.ds-meter__fill` | The filled portion. Drive it with `style="width: 62%;"`. |
+| `.ds-meter__label` | The number, centred over the fill. |
+| `.ds-meter--sm` | 10 px. A status pip — too short for a label. |
+| `.ds-meter--lg` | 24 px. A boss bar or a cast bar. |
+| `.ds-meter--secondary` `--tertiary` `--warning` `--danger` | Fill colour by role. |
+| `.ds-meter__fill.is-warning` `.is-danger` | Live states — flip from game code as a value crosses a threshold. |
+
+```xml
+<ui:VisualElement class="ds-meter ds-meter--danger">
+    <ui:VisualElement name="hp-fill" class="ds-meter__fill" style="width: 62%;"/>
+    <ui:Label text="184 / 240" class="ds-meter__label"/>
+</ui:VisualElement>
+```
+
+The label is a **sibling of the fill, placed after it**. UI Toolkit has no `z-index` — later in the DOM is the only way to paint over the fill — and a Label *inside* the fill is clipped to the fill's width and slides around as the value changes.
+
+**Do not hand-roll this.** The obvious hand-roll is broken and reads as correct:
+
+```css
+.xp-track { height: 12px; overflow: hidden; }   /* clips at 12px      */
+.xp-text  { position: absolute; top: -2px; }    /* text is ~14px tall */
+```
+
+The label is taller than the track that clips it, so you ship a bar with the top two pixels of some text peeking out of it.
+
+**A HUD bar is 20 px.** It is not 40. At 40 px with a `ds-h3` number on it, two of them own a quarter of the player's screen.
 
 ## Cards
 
@@ -118,7 +174,7 @@ A tab strip on its own is a filter row — it styles state and you drive the fil
 
 | Class | Use |
 | --- | --- |
-| `.ds-side-nav` | Full-width vertical nav with icon + label rows. |
+| `.ds-side-nav` | Full-width vertical nav with icon + label rows. **This is a vertical tab strip** — see below. |
 | `.ds-nav-item` | A row inside `.ds-side-nav`; pair with `.is-active`. |
 | `.ds-nav-item__icon` | 18 × 18 icon. |
 | `.ds-nav-item__label` | Label, flex-grows to fill remaining space. |
@@ -130,6 +186,30 @@ A tab strip on its own is a filter row — it styles state and you drive the fil
 | `.ds-profile__avatar` | 32 × 32 circular avatar slot. |
 | `.ds-profile__name` | Display name (bold). |
 | `.ds-profile__chevron` | Drop-down indicator. |
+
+### A side nav is a tab strip
+
+It switches panels through the **same mechanism as `.ds-tabs`**: give it a `.ds-tabpanels` sibling and the Nth `.ds-nav-item` shows the Nth `.ds-tabpanel`. Positional — nothing to name, nothing to wire.
+
+```xml
+<ui:VisualElement style="flex-direction: row;">
+    <ui:VisualElement class="ds-side-nav">
+        <ui:VisualElement class="ds-nav-item is-active">
+            <ui:Label text="Graphics" class="ds-nav-item__label"/></ui:VisualElement>
+        <ui:VisualElement class="ds-nav-item">
+            <ui:Label text="Audio" class="ds-nav-item__label"/></ui:VisualElement>
+    </ui:VisualElement>
+
+    <ui:VisualElement class="ds-tabpanels">
+        <ui:VisualElement class="ds-tabpanel is-active"> ...graphics... </ui:VisualElement>
+        <ui:VisualElement class="ds-tabpanel">           ...audio...    </ui:VisualElement>
+    </ui:VisualElement>
+</ui:VisualElement>
+```
+
+Without the `.ds-tabpanels` sibling a side nav is **inert**: it highlights on hover and never switches anything, so a Settings screen ships with Audio and Controls permanently unreachable.
+
+**Every panel is a real panel.** A `.ds-tabpanel` holding a single `<Label text="Audio…"/>` is not a tab — it is a tab that looks broken, because clicking it replaces a screenful of content with three words.
 
 ## Badges & labels
 
@@ -272,6 +352,32 @@ Tint variants: `--primary` (text-primary), `--secondary` (text-secondary), `--di
 | `.ds-caption` | 11 px / medium / text-secondary |
 | `.ds-text-success` | Helper colour utility (primary green). |
 | `.ds-text-primary` | Helper colour utility (text-primary white). |
+| `.ds-nowrap` | One line, refuses to shrink. **Use on any label sitting in a row next to a fixed-size element.** |
+| `.ds-truncate` | One line, takes the space it's given, ellipsizes the rest. For user data of unknown length. |
+
+### Prose wraps. Labels do not.
+
+Every class in the table above sets `white-space: normal`. That is right for a paragraph and wrong for the short fixed labels that make up most of a UI — a slot name, a stat value, a menu entry.
+
+The reason it bites is **flexbox, not typography**. Inside a `flex-direction: row`, a Label is `flex-shrink: 1` like everything else, so when the row is tight Yoga shrinks the *label* rather than the fixed-size icon next to it — and a `white-space: normal` Label that has been shrunk below its text width does not overflow the way a browser would. It wraps. If the box is narrower than the word, it wraps **mid-word**.
+
+That is how `Armor` renders as `Armo / r` under a 56 px slot with 130 px of free space to its right. Nothing overflowed; the label just volunteered to be 30 px wide.
+
+```xml
+<!-- WRONG: wraps mid-word the moment the row is tight -->
+<ui:VisualElement style="flex-direction: row; align-items: center;">
+    <ui:VisualElement class="equip-slot"/>
+    <ui:Label text="Main Hand" class="ds-caption"/>
+</ui:VisualElement>
+
+<!-- RIGHT -->
+<ui:VisualElement style="flex-direction: row; align-items: center;">
+    <ui:VisualElement class="equip-slot"/>
+    <ui:Label text="Main Hand" class="ds-caption ds-nowrap"/>
+</ui:VisualElement>
+```
+
+A quest description, a tooltip body, a death-screen blurb: leave those wrapping.
 
 ## Showcase helpers
 

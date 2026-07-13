@@ -4,6 +4,30 @@
    - Side rail (icon-only)         : .ds-side-rail
    - Bottom tab bar (mobile)       : .ds-bottom-nav
    - Profile chip                  : .ds-profile
+
+   A SIDE NAV IS A TAB STRIP — vertical tabs. It switches panels through the
+   exact same mechanism as `.ds-tabs`: give it a `.ds-tabpanels` SIBLING and
+   the runtime maps the Nth `.ds-nav-item` to the Nth `.ds-tabpanel`. Nothing
+   to name, nothing to wire.
+
+     <VisualElement style="flex-direction: row;">
+       <VisualElement class="ds-side-nav">
+         <VisualElement class="ds-nav-item is-active">
+           <Label text="Graphics" class="ds-nav-item__label"/></VisualElement>
+         <VisualElement class="ds-nav-item">
+           <Label text="Audio" class="ds-nav-item__label"/></VisualElement>
+       </VisualElement>
+
+       <VisualElement class="ds-tabpanels">
+         <VisualElement class="ds-tabpanel is-active"> ...graphics... </VisualElement>
+         <VisualElement class="ds-tabpanel">          ...audio...    </VisualElement>
+       </VisualElement>
+     </VisualElement>
+
+   Without the `.ds-tabpanels` sibling a side nav is INERT: it highlights on
+   hover, it never switches anything, and a Settings screen ships with Audio
+   and Controls permanently unreachable. There is no other wiring — if the
+   panels aren't there, nothing happens.
    ============================================================================ */
 
 /* ---------- Side nav (full width with labels) ---------- */

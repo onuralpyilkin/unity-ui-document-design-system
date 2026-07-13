@@ -42,6 +42,9 @@ namespace DesignSystem.Runtime
         private const string TABPANELS_CLASS       = "ds-tabpanels";
         private const string TABPANEL_CLASS        = "ds-tabpanel";
         private const string TABS_WIRED_CLASS      = "ds-tabs--wired";   // internal: marks an already-wired tab strip
+        private const string SIDE_NAV_CLASS        = "ds-side-nav";
+        private const string NAV_ITEM_CLASS        = "ds-nav-item";
+        private const string SIDE_NAV_WIRED_CLASS  = "ds-side-nav--wired"; // internal: marks an already-wired side nav
         private const string ACTIVE_CLASS          = "is-active";
         private const string SCROLL_AUTOHIDE_CLASS = "ds-scroll--auto-hide";
         private const string SCROLL_WIRED_CLASS    = "ds-scroll--wired"; // internal: marks an already-wired scroll view
@@ -50,7 +53,7 @@ namespace DesignSystem.Runtime
         private const string POPUP_TUNED_CLASS     = "ds-popup--tuned";         // internal: marks an already-tuned popup instance
 
         // Unity's GenericDropdownMenu internals (names verified against
-        // UnityCsReference; ShowcaseDropdownPopup.uss documents the full map).
+        // UnityCsReference; DropdownPopup.uss documents the full map).
         private const string POPUP_CLASS       = "unity-base-dropdown";
         private const string POPUP_OUTER_CLASS = "unity-base-dropdown__container-outer";
 
@@ -87,6 +90,7 @@ namespace DesignSystem.Runtime
             EnsureDraggables(root);
             EnsureDropdownMenus(root);
             EnsureTabs(root);
+            EnsureSideNav(root);
             EnsureScrollAutoHide(root);
         }
 
@@ -204,6 +208,26 @@ namespace DesignSystem.Runtime
         }
 
         /// <summary>
+        /// Make every `.ds-side-nav` switch content, exactly like `.ds-tabs` does. A side nav IS a tab
+        /// strip — vertical tabs — and it shipped with no way to switch: `EnsureTabs` only ever looked
+        /// for `.ds-tabs`, so a Settings screen with a Graphics / Audio / Controls rail rendered the
+        /// Graphics pane and then ignored every other item forever. Give the nav a `.ds-tabpanels`
+        /// sibling and the Nth `.ds-nav-item` shows the Nth panel. Idempotent.
+        /// </summary>
+        public static void EnsureSideNav(VisualElement root)
+        {
+            if (root == null) return;
+            root.Query(className: SIDE_NAV_CLASS).ForEach(nav =>
+            {
+                if (nav.ClassListContains(SIDE_NAV_WIRED_CLASS)) return;
+                if (WireSideNav(nav)) nav.AddToClassList(SIDE_NAV_WIRED_CLASS);
+            });
+        }
+
+        /// <summary>Wire one `.ds-side-nav` to its panels. See <see cref="WireTabs"/>.</summary>
+        public static bool WireSideNav(VisualElement nav) => WirePanelSwitcher(nav, NAV_ITEM_CLASS);
+
+        /// <summary>
         /// Wire one tab strip to its panels. Pass the `.ds-tabs` element; the panel container is the
         /// `.ds-tabpanels` among its immediate siblings (the canonical layout puts it directly after).
         ///
@@ -216,12 +240,19 @@ namespace DesignSystem.Runtime
         /// Returns false if there was nothing to wire (no panel container, no tabs, no panels), which
         /// is the normal, non-error outcome for a filter-chip strip.
         /// </summary>
-        public static bool WireTabs(VisualElement tabs)
+        public static bool WireTabs(VisualElement tabs) => WirePanelSwitcher(tabs, TAB_CLASS);
+
+        /// <summary>
+        /// The one switcher behind both `.ds-tabs` (horizontal) and `.ds-side-nav` (vertical). Both are
+        /// the same thing — a strip of items, a stack of panels, the Nth item shows the Nth panel —
+        /// and they were only separate long enough for one of them to ship dead.
+        /// </summary>
+        private static bool WirePanelSwitcher(VisualElement strip, string itemClass)
         {
-            if (tabs?.parent == null) return false;
+            if (strip?.parent == null) return false;
 
             VisualElement panelHost = null;
-            foreach (var sibling in tabs.parent.Children())
+            foreach (var sibling in strip.parent.Children())
             {
                 if (!sibling.ClassListContains(TABPANELS_CLASS)) continue;
                 panelHost = sibling;
@@ -229,7 +260,9 @@ namespace DesignSystem.Runtime
             }
             if (panelHost == null) return false;   // filter-chip strip, not a tabbed view — nothing to switch
 
-            var tabList = tabs.Query<Button>(className: TAB_CLASS).ToList();
+            // Untyped query: a tab is a Button, but a nav item is usually a plain VisualElement. Both
+            // are wired below through whichever click path they actually have.
+            var itemList = strip.Query(className: itemClass).ToList();
 
             // Direct children of the host, for the same reason the host itself is a sibling lookup:
             // a tabbed view nested INSIDE one of these panels brings its own `.ds-tabpanel` elements,
@@ -239,24 +272,25 @@ namespace DesignSystem.Runtime
                 if (child.ClassListContains(TABPANEL_CLASS))
                     panelList.Add(child);
 
-            if (tabList.Count == 0 || panelList.Count == 0) return false;
+            if (itemList.Count == 0 || panelList.Count == 0) return false;
 
-            for (var i = 0; i < tabList.Count; i++)
+            for (var i = 0; i < itemList.Count; i++)
             {
                 var index = i;   // capture per iteration, not the loop variable
-                tabList[i].clicked += () => Activate(index);
+                if (itemList[i] is Button button) button.clicked += () => Activate(index);
+                else itemList[i].RegisterCallback<ClickEvent>(_ => Activate(index));
             }
 
-            // Honor whatever the UXML marked active; default to the first tab so a strip is never
+            // Honor whatever the UXML marked active; default to the first item so a strip is never
             // rendered with every panel hidden.
-            var initial = tabList.FindIndex(t => t.ClassListContains(ACTIVE_CLASS));
+            var initial = itemList.FindIndex(t => t.ClassListContains(ACTIVE_CLASS));
             Activate(initial < 0 ? 0 : initial);
             return true;
 
             void Activate(int index)
             {
-                for (var i = 0; i < tabList.Count; i++)
-                    SetActive(tabList[i], i == index);
+                for (var i = 0; i < itemList.Count; i++)
+                    SetActive(itemList[i], i == index);
                 for (var i = 0; i < panelList.Count; i++)
                     SetActive(panelList[i], i == index);
             }
@@ -550,6 +584,23 @@ namespace DesignSystem.Runtime
                 ghost.Add(new Label("•") { pickingMode = PickingMode.Ignore });
 
             ghost.AddToClassList(DRAG_GHOST_CLASS);
+
+            // Pin the ghost to the PIXEL size of the thing that was picked up.
+            //
+            // Copying the item's classes is what makes the ghost look right, and it is also a trap:
+            // an inventory item is almost always sized RELATIVE to the cell that holds it
+            // (`.inv-item { width: 100%; height: 100% }` — 100% of a 72px slot). The ghost is not in
+            // that slot. It is reparented to the `.ds-root`, where the very same rule resolves to
+            // 100% of the SCREEN, and the item you picked up detonates into a full-page rectangle.
+            //
+            // Inline styles outrank every class rule the ghost just copied, whatever the load order,
+            // so measuring once here settles it. The item is laid out — the drag began with a pointer
+            // down ON it — so resolvedStyle is real, not NaN.
+            var w = item.resolvedStyle.width;
+            var h = item.resolvedStyle.height;
+            if (!float.IsNaN(w) && w > 0f) ghost.style.width = w;
+            if (!float.IsNaN(h) && h > 0f) ghost.style.height = h;
+
             ghost.style.translate = new Translate(Length.Percent(-50), Length.Percent(-50));
             return ghost;
         }
