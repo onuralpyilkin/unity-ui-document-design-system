@@ -4,6 +4,25 @@ All notable changes to this project will be documented here.
 
 This project loosely follows [Semantic Versioning](https://semver.org/) and uses the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
 
+## [1.4.4] — 2026-07-13
+
+Tabs now switch content, and HUDs can finally be transparent. Both gaps had the same shape: the system shipped the *look* of a component but no way to make it *work*, so every consumer invented their own — or shipped the decoration and nothing behind it.
+
+### Added
+
+- **Tab panels — `.ds-tabpanels` / `.ds-tabpanel`.** A `.ds-tabs` strip styled the selected state and stopped there, so tabbed screens shipped as four buttons above one long scroll of every section stacked together. Add a `.ds-tabpanels` sibling after the strip and the Nth `.ds-tab` shows the Nth `.ds-tabpanel`. Positional, not id-based: there is nothing to name, nothing to target and nothing to keep in sync.
+    - **`DesignSystemRuntime.EnsureTabs(root)`** wires the clicks automatically on both backends (auto-attached, idempotent, re-scanned on the 250 ms tick so lazily-cloned screens are covered). `is-active` remains the only state, so a C# controller or a pure-USS author can drive the same markup by flipping the class.
+    - A `.ds-tabs` with **no** `.ds-tabpanels` sibling is left alone — a filter-chip strip over a single list is still a valid use, and those drive their own logic off `is-active`.
+- **`.ds-root--hud`** — a transparent, content-sized screen root. `.ds-root` is mandatory (it is what makes `var(--...)` resolve and what scopes the scrollbar, focus-ring and transition families) but it also paints `--color-bg` edge to edge. That is right for a menu and wrong for a health bar: a HUD built on plain `ds-root` renders as a dark slab over the game. Compose `class="ds-root ds-root--hud"` for anything the game world must show through.
+
+Both are live in both showcase modes: the flat page grows a TABBED PANELS section, and the same section hangs in the walkable gallery as a panel you can actually click through. The world-space HUD (the mode switch, the hints bar, the touch sticks) is itself now built on `ds-root--hud`, which is what lets its switch be real `.ds-tabs` instead of a hand-styled lookalike.
+
+### Fixed
+
+- **Auto-hiding scrollbars only auto-hid for mouse users.** `WireScrollAutoHide` adds the `is-scrolling` marker the touch half of the rule needs, and `InitFor` never called it — the helper had been dead since it was written, so `.ds-scroll--auto-hide` worked via `:hover` and nowhere else. Now wired by **`DesignSystemRuntime.EnsureScrollAutoHide(root)`** alongside the other auto-attached behaviors.
+- **New behaviors reached screen space but not world space.** Hosts that drive their own `PanelRenderer` reload callback (the showcase corridor) can't use the runtime MonoBehaviour, so they called `Ensure*` helpers by hand, and that list quietly stopped being the whole system every time one was added. Tab panels and scroll auto-hide shipped dead in the 3D gallery for exactly this reason. **`DesignSystemRuntime.EnsureAll(root)`** is now the single seam every host calls, so a new behavior lands everywhere at once.
+- **A tab strip could seize an unrelated view's panels.** The panel container was resolved with a subtree search from the strip's parent, so a filter-chip strip sharing a container with a tabbed view further down the page (the showcase's own Screen/World switch sits in the same scroll view as every demo section) could bind to that view's panels and fight its real strip over which one is active. The lookup is now strictly the strip's sibling, and panels are strictly that container's children, so nesting a tabbed view inside a tab panel works.
+
 ## [1.4.3] — 2026-07-06
 
 The showcase gains a second mode: a walkable 3D gallery where all 29 sections hang as live, fully interactive world-space panels (`PanelRenderer`, Unity 6000.5+) on the walls of a lit corridor. Dropdown popups now behave like web selects in both modes, drag & drop works everywhere, and the repo ships metadata for contributors and AI coding assistants. First release published to OpenUPM. Same showcase URL, refresh to see.

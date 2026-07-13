@@ -69,6 +69,15 @@ namespace Showcase.Runtime
             if (root == null) return;
             if (_dsUss != null && !root.styleSheets.Contains(_dsUss)) root.styleSheets.Add(_dsUss);
 
+            // This is the case `ds-root--hud` exists for, so the showcase's own HUD
+            // is built out of it: the corridor has to stay visible through this
+            // panel, and plain `ds-root` would paint `--color-bg` over the whole
+            // gallery. The pairing buys the ds-root cascade (text ramp, scrollbar
+            // and focus-ring families) with no fill — which is what lets the mode
+            // switch below be real `.ds-tabs` rather than a hand-styled lookalike.
+            root.AddToClassList("ds-root");
+            root.AddToClassList("ds-root--hud");
+
             root.pickingMode = PickingMode.Ignore;
             root.style.position = Position.Absolute;
             root.style.left = 0; root.style.top = 0; root.style.right = 0; root.style.bottom = 0;

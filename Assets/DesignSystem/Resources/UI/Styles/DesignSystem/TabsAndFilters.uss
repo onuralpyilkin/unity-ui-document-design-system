@@ -41,6 +41,36 @@
     color: var(--color-text-on-accent);
 }
 
+/* Tab PANELS — the content a tab strip switches between.
+   A tab strip without panels is decoration: authors were shipping four `.ds-tab` buttons over one
+   long scroll of every section stacked together, because the system offered no way to say "this
+   content belongs to that tab". Structure is positional — the Nth `.ds-tab` shows the Nth
+   `.ds-tabpanel` — so there is no id/target bookkeeping to get wrong:
+
+     <ui:VisualElement class="ds-tabs">
+         <ui:Button text="Graphics" class="ds-tab is-active"/>
+         <ui:Button text="Audio"    class="ds-tab"/>
+     </ui:VisualElement>
+     <ui:VisualElement class="ds-tabpanels">
+         <ui:VisualElement class="ds-tabpanel is-active">...graphics rows...</ui:VisualElement>
+         <ui:VisualElement class="ds-tabpanel">...audio rows...</ui:VisualElement>
+     </ui:VisualElement>
+
+   The runtime wires clicks automatically (DesignSystemRuntime.EnsureTabs); `is-active` is the only
+   state, so a pure-USS author or a C# controller can drive the same markup by flipping the class. */
+.ds-tabpanels {
+    flex-grow: 1;
+}
+
+.ds-tabpanel {
+    display: none;
+    flex-grow: 1;
+}
+
+.ds-tabpanel.is-active {
+    display: flex;
+}
+
 /* View-toggle (grid / list) — same paradigm but with icon-only tabs */
 .ds-view-toggle {
     flex-direction: row;

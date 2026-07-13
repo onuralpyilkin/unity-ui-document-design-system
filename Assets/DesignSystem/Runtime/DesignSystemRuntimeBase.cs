@@ -37,6 +37,14 @@ namespace DesignSystem.Runtime
         private const string DRAG_GHOST_CLASS      = "ds-drag-ghost";
         private const string DRAGGING_CLASS        = "is-dragging";      // on the source item while its ghost is out
         private const string ROOT_CLASS            = "ds-root";
+        private const string TABS_CLASS            = "ds-tabs";
+        private const string TAB_CLASS             = "ds-tab";
+        private const string TABPANELS_CLASS       = "ds-tabpanels";
+        private const string TABPANEL_CLASS        = "ds-tabpanel";
+        private const string TABS_WIRED_CLASS      = "ds-tabs--wired";   // internal: marks an already-wired tab strip
+        private const string ACTIVE_CLASS          = "is-active";
+        private const string SCROLL_AUTOHIDE_CLASS = "ds-scroll--auto-hide";
+        private const string SCROLL_WIRED_CLASS    = "ds-scroll--wired"; // internal: marks an already-wired scroll view
         private const string DS_DROPDOWN_CLASS     = "ds-dropdown";
         private const string DROPDOWN_WIRED_CLASS  = "ds-dropdown--menu-wired"; // internal: marks an already-wired dropdown
         private const string POPUP_TUNED_CLASS     = "ds-popup--tuned";         // internal: marks an already-tuned popup instance
@@ -56,32 +64,49 @@ namespace DesignSystem.Runtime
         
         protected abstract void OnEnable();
 
-        protected void InitFor(VisualElement root)
+        /// <summary>
+        /// Run every auto-attached behavior over <paramref name="root"/>: knob injection, skeleton
+        /// shimmers, draggables, dropdown popups, tab panels, scroll auto-hide. Idempotent, static,
+        /// and free of per-instance state, so any host can call it for any panel root.
+        ///
+        /// This is the ONE list. Hosts that can't use the runtime MonoBehaviour — anything driving
+        /// its own <c>PanelRenderer</c> reload callback, e.g. the showcase's world-space corridor —
+        /// must call this rather than hand-picking `Ensure*` helpers: a hand-picked list silently
+        /// stops covering the system the moment a new behavior is added here, which is exactly how
+        /// tab panels and scroll auto-hide shipped dead in world space. Add new behaviors HERE and
+        /// every host gets them.
+        ///
+        /// Spinners are deliberately NOT here: <see cref="StartSpinners"/> owns a per-instance
+        /// schedule handle, so it belongs to the MonoBehaviour lifecycle, not to a root sweep.
+        /// </summary>
+        public static void EnsureAll(VisualElement root)
         {
             if (root == null) return;
             EnsureToggleKnobs(root);
             EnsureSkeletonShimmers(root);
             EnsureDraggables(root);
             EnsureDropdownMenus(root);
+            EnsureTabs(root);
+            EnsureScrollAutoHide(root);
+        }
+
+        protected void InitFor(VisualElement root)
+        {
+            if (root == null) return;
+            EnsureAll(root);
             StartSpinners(root);
 
             // Periodic re-scan: ScreenBase and similar consumers clone screen
             // templates lazily when the user navigates to them. The first
-            // EnsureToggleKnobs/Shimmers pass only sees what's in the tree at
-            // attach time — toggles cloned in later (e.g. Settings on first
-            // open) would otherwise stay knob-less and render as a flat pill.
+            // EnsureAll pass only sees what's in the tree at attach time —
+            // toggles cloned in later (e.g. Settings on first open) would
+            // otherwise stay knob-less and render as a flat pill.
             // 250 ms is fast enough that the user never notices a missing knob
             // after a screen transition, and cheap enough to ignore (a Query
             // with an existence check on already-knobbed toggles is O(N) over
-            // the small number of ds-toggle elements). Idempotent — both
-            // helpers no-op if the children already exist.
-            root.schedule.Execute(() =>
-            {
-                EnsureToggleKnobs(root);
-                EnsureSkeletonShimmers(root);
-                EnsureDraggables(root);
-                EnsureDropdownMenus(root);
-            }).Every(250);
+            // the small number of ds-toggle elements). Idempotent — every
+            // helper no-ops if its work is already done.
+            root.schedule.Execute(() => EnsureAll(root)).Every(250);
         }
 
         protected virtual void OnDisable()
@@ -149,6 +174,114 @@ namespace DesignSystem.Runtime
                 knob.AddToClassList(TOGGLE_KNOB_CLASS);
                 knob.pickingMode = PickingMode.Ignore;
                 input.Add(knob);
+            });
+        }
+
+        /// <summary>
+        /// Make every `.ds-tabs` strip actually switch content. The Nth `.ds-tab` activates the Nth
+        /// `.ds-tabpanel` of the strip's panel container; clicking a tab moves `is-active` onto it and
+        /// onto its panel, and off every sibling. Idempotent.
+        ///
+        /// Positional, not id-based, on purpose: the failure this fixes is authors shipping a tab strip
+        /// with no way to switch at all, so the pattern has to work from markup alone with nothing to
+        /// wire up, nothing to name and nothing to keep in sync. A strip with no panel container is
+        /// left alone — some tab strips really are just filter chips over one list, and those drive
+        /// their own logic off `is-active`.
+        /// </summary>
+        public static void EnsureTabs(VisualElement root)
+        {
+            if (root == null) return;
+            root.Query(className: TABS_CLASS).ForEach(tabs =>
+            {
+                if (tabs.ClassListContains(TABS_WIRED_CLASS)) return;
+                // Mark only on success. A strip with no panels yet is not necessarily a filter-chip
+                // strip: a controller may still be about to add its `.ds-tabpanels`. Marking it here
+                // would retire it from the 250 ms rescan (whose whole job is catching late content)
+                // and it would never wire. Re-examining an unwired strip is a walk over its parent's
+                // direct children, which is cheap enough to repeat.
+                if (WireTabs(tabs)) tabs.AddToClassList(TABS_WIRED_CLASS);
+            });
+        }
+
+        /// <summary>
+        /// Wire one tab strip to its panels. Pass the `.ds-tabs` element; the panel container is the
+        /// `.ds-tabpanels` among its immediate siblings (the canonical layout puts it directly after).
+        ///
+        /// Siblings ONLY — deliberately not a subtree search. A tab strip and an unrelated tabbed view
+        /// can easily share an ancestor (the showcase's Screen/World mode switch sits in the same
+        /// scroll container as every demo section), and a descendant search would let the first strip
+        /// on the page seize the panels of a tabbed view further down and fight its real strip over
+        /// which panel is active.
+        ///
+        /// Returns false if there was nothing to wire (no panel container, no tabs, no panels), which
+        /// is the normal, non-error outcome for a filter-chip strip.
+        /// </summary>
+        public static bool WireTabs(VisualElement tabs)
+        {
+            if (tabs?.parent == null) return false;
+
+            VisualElement panelHost = null;
+            foreach (var sibling in tabs.parent.Children())
+            {
+                if (!sibling.ClassListContains(TABPANELS_CLASS)) continue;
+                panelHost = sibling;
+                break;
+            }
+            if (panelHost == null) return false;   // filter-chip strip, not a tabbed view — nothing to switch
+
+            var tabList = tabs.Query<Button>(className: TAB_CLASS).ToList();
+
+            // Direct children of the host, for the same reason the host itself is a sibling lookup:
+            // a tabbed view nested INSIDE one of these panels brings its own `.ds-tabpanel` elements,
+            // and a subtree query would fold them into this strip's positional mapping.
+            var panelList = new List<VisualElement>();
+            foreach (var child in panelHost.Children())
+                if (child.ClassListContains(TABPANEL_CLASS))
+                    panelList.Add(child);
+
+            if (tabList.Count == 0 || panelList.Count == 0) return false;
+
+            for (var i = 0; i < tabList.Count; i++)
+            {
+                var index = i;   // capture per iteration, not the loop variable
+                tabList[i].clicked += () => Activate(index);
+            }
+
+            // Honor whatever the UXML marked active; default to the first tab so a strip is never
+            // rendered with every panel hidden.
+            var initial = tabList.FindIndex(t => t.ClassListContains(ACTIVE_CLASS));
+            Activate(initial < 0 ? 0 : initial);
+            return true;
+
+            void Activate(int index)
+            {
+                for (var i = 0; i < tabList.Count; i++)
+                    SetActive(tabList[i], i == index);
+                for (var i = 0; i < panelList.Count; i++)
+                    SetActive(panelList[i], i == index);
+            }
+
+            static void SetActive(VisualElement el, bool active)
+            {
+                if (active) el.AddToClassList(ACTIVE_CLASS);
+                else el.RemoveFromClassList(ACTIVE_CLASS);
+            }
+        }
+
+        /// <summary>
+        /// Attach the touch-friendly scrollbar flash to every `.ds-scroll--auto-hide` ScrollView.
+        /// Without this the `is-scrolling` half of the auto-hide rule never fired — the class was
+        /// defined in USS, the helper existed, and nothing ever called it, so auto-hiding scrollbars
+        /// only worked for mouse users with a `:hover`. Idempotent.
+        /// </summary>
+        public static void EnsureScrollAutoHide(VisualElement root)
+        {
+            if (root == null) return;
+            root.Query(className: SCROLL_AUTOHIDE_CLASS).ForEach(scroll =>
+            {
+                if (scroll.ClassListContains(SCROLL_WIRED_CLASS)) return;
+                scroll.AddToClassList(SCROLL_WIRED_CLASS);
+                WireScrollAutoHide(scroll);
             });
         }
 

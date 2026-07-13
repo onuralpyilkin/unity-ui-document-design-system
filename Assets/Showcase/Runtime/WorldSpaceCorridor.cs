@@ -263,10 +263,12 @@ namespace Showcase.Runtime
             }
             if (_themeMap != null) CodigrateThemeApplier.Apply(root, _themeMap);
             else                   CodigrateThemeApplier.Revert(root);
-            // The applier stamps the palette bg onto the root (and Revert
-            // resets it to the USS `.ds-root` opaque page bg) — but a world
-            // exhibit's backdrop is the 3D plate, so re-assert transparency
-            // as the last write.
+            // The applier stamps the palette bg INLINE onto the root, and no
+            // class (not even `ds-root--hud`) outranks an inline style — so a
+            // world exhibit, whose backdrop is the 3D plate, has to re-assert
+            // transparency as the last write. Revert() needs no such help: it
+            // clears the inline bg back to USS, which `ds-root--hud` already
+            // resolves to transparent.
             root.style.backgroundColor = Color.clear;
         }
 
@@ -954,9 +956,10 @@ namespace Showcase.Runtime
                 // class, world exhibits get the chunky default-theme
                 // scrollbars and a 12px baseline. The page background that
                 // comes with it is unwanted here (the exhibit's backdrop is
-                // the 3D plate), so it's cleared inline right after.
+                // the 3D plate), which is exactly what `ds-root--hud` is for:
+                // the ds-root cascade with no opaque fill.
                 root.AddToClassList("ds-root");
-                root.style.backgroundColor = Color.clear;
+                root.AddToClassList("ds-root--hud");
 
                 // Pin the root to the exhibit's own width and centre the wrap in
                 // it. Without a definite width the Dynamic world panel resolved to
@@ -984,10 +987,19 @@ namespace Showcase.Runtime
                 if (Content != null && Content.parent != root)
                     root.Add(Content);
 
-                DsRuntime.EnsureToggleKnobs(root);
-                DsRuntime.EnsureSkeletonShimmers(root);
-                DsRuntime.EnsureDraggables(root);
-                DsRuntime.EnsureDropdownMenus(root);
+                // Every auto-attached DS behavior, in one call. The exhibits are
+                // FRESH UXML clones (HarvestSections instantiates the showcase
+                // asset), so nothing the flat page's runtime wired carries over —
+                // each world panel has to be wired on its own. This used to be a
+                // hand-picked list of Ensure* calls and it silently rotted: tab
+                // panels and scroll auto-hide shipped dead in world space because
+                // nobody remembered to add them here. EnsureAll is the seam; new
+                // behaviors arrive for free.
+                //
+                // Spinners are the one exception, and are not in EnsureAll: they
+                // need a MonoBehaviour's schedule handle, so the corridor drives
+                // `.is-spinning` across all panels itself (see Update).
+                DsRuntime.EnsureAll(root);
 
                 // Re-apply whatever theme the flat page is currently on, so a
                 // theme picked BEFORE entering the corridor (or while inside it)

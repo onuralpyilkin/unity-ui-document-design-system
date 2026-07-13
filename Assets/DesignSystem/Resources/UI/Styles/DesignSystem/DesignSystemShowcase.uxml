@@ -300,6 +300,50 @@
                     </ui:Button>
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:VisualElement class="ds-section" style="width: 280px;">
+                <ui:Label text="TABBED PANELS" class="ds-section__title"/>
+                <ui:VisualElement class="ds-tabs" style="margin-bottom: 12px;">
+                    <ui:Button text="Graphics" class="ds-tab is-active"/>
+                    <ui:Button text="Audio" class="ds-tab"/>
+                    <ui:Button text="Controls" class="ds-tab"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="ds-tabpanels">
+                    <ui:VisualElement class="ds-tabpanel is-active">
+                        <ui:VisualElement class="ds-row" style="margin-bottom: 12px;">
+                            <ui:Label text="Quality" class="ds-body-1" style="flex-grow: 1;"/>
+                            <ui:DropdownField choices="Low,Medium,High,Ultra" index="2" class="ds-dropdown" style="width: 110px;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="ds-row">
+                            <ui:Label text="Fullscreen" class="ds-body-1" style="flex-grow: 1;"/>
+                            <ui:Toggle class="ds-toggle" value="true">
+                                <ui:VisualElement class="ds-toggle__knob"/>
+                            </ui:Toggle>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="ds-tabpanel">
+                        <ui:VisualElement class="ds-row" style="margin-bottom: 12px;">
+                            <ui:Label text="Master" class="ds-body-1" style="flex-grow: 1;"/>
+                            <ui:Slider low-value="0" high-value="100" value="80" class="ds-slider ds-slider--filled" style="width: 110px;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="ds-row">
+                            <ui:Label text="Music" class="ds-body-1" style="flex-grow: 1;"/>
+                            <ui:Slider low-value="0" high-value="100" value="55" class="ds-slider ds-slider--filled" style="width: 110px;"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="ds-tabpanel">
+                        <ui:VisualElement class="ds-row" style="margin-bottom: 12px;">
+                            <ui:Label text="Invert Y" class="ds-body-1" style="flex-grow: 1;"/>
+                            <ui:Toggle class="ds-toggle">
+                                <ui:VisualElement class="ds-toggle__knob"/>
+                            </ui:Toggle>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="ds-row">
+                            <ui:Label text="Sensitivity" class="ds-body-1" style="flex-grow: 1;"/>
+                            <ui:Slider low-value="1" high-value="10" value="4" class="ds-slider ds-slider--filled" style="width: 110px;"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
             <ui:VisualElement class="ds-section" style="width: 460px;">
                 <ui:Label text="ANIMAL CARD (EXAMPLE)" class="ds-section__title"/>
                 <ui:VisualElement style="flex-direction: row;">

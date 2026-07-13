@@ -128,3 +128,13 @@
     -unity-font-style: normal;
     flex-grow: 1;
 }
+
+/* HUD / overlay root — everything `ds-root` gives you (the token cascade, the text ramp) with NO
+   opaque background, for UI that floats over gameplay: a health bar, a minimap, a crosshair, a
+   damage vignette. `ds-root` alone paints `--color-bg` edge to edge, so a HUD built on it renders
+   as a dark slab over the game and the whole screen reads as "a menu that forgot its content".
+   Compose it: class="ds-root ds-root--hud". Full-screen menus keep plain `ds-root`. */
+.ds-root--hud {
+    background-color: rgba(0, 0, 0, 0);
+    flex-grow: 0;
+}

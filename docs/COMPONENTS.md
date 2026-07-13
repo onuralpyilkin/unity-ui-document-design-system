@@ -2,6 +2,15 @@
 
 One-line summary per component class. The showcase UXML (`Assets/DesignSystem/Resources/UI/Styles/DesignSystem/DesignSystemShowcase.uxml`) is the second source of truth — every class here appears there with its expected DOM structure and at least one rendered state.
 
+## Screen root
+
+| Class | Use |
+| --- | --- |
+| `.ds-root` | Topmost element of any screen. Cascades the tokens and paints `--color-bg` edge to edge. |
+| `.ds-root--hud` | Compose with `.ds-root` for UI that floats **over gameplay** — transparent background, content-sized. |
+
+Every screen needs `ds-root`: it is what makes `var(--...)` resolve and what scopes the scrollbar, focus-ring and transition families. But it also paints an opaque background, which is right for a full-screen menu and wrong for a health bar. A HUD, a minimap, a crosshair, a damage vignette — anything the game world must show through — carries `class="ds-root ds-root--hud"`.
+
 ## Buttons
 
 | Class | Use |
@@ -49,9 +58,26 @@ Set placeholders via `field.textEdition.placeholder = "..."` in C#. Unity 6's AP
 | Class | Use |
 | --- | --- |
 | `.ds-tabs` | Container; flex-row segmented strip with surface-elev fill. |
-| `.ds-tab` | Single tab; pair with `.is-active` for the selected state. |
+| `.ds-tab` | Single tab (`<Button>`); pair with `.is-active` for the selected state. |
+| `.ds-tabpanels` | Container for the tab bodies; put it as a sibling right after `.ds-tabs`. |
+| `.ds-tabpanel` | One tab's content; hidden unless `.is-active`. |
 | `.ds-view-toggle` | Container for grid/list view switching. |
 | `.ds-view-toggle__btn` | Square icon button inside the toggle. |
+
+A tab strip on its own is a filter row — it styles state and you drive the filtering. To switch **content**, add a `.ds-tabpanels` sibling: the Nth `.ds-tab` shows the Nth `.ds-tabpanel`, and the runtime (`DesignSystemRuntime.EnsureTabs`) wires the clicks with no C# and no ids.
+
+```xml
+<ui:VisualElement class="ds-tabs">
+    <ui:Button text="Graphics" class="ds-tab is-active"/>
+    <ui:Button text="Audio"    class="ds-tab"/>
+</ui:VisualElement>
+<ui:VisualElement class="ds-tabpanels">
+    <ui:VisualElement class="ds-tabpanel is-active">...graphics rows...</ui:VisualElement>
+    <ui:VisualElement class="ds-tabpanel">...audio rows...</ui:VisualElement>
+</ui:VisualElement>
+```
+
+`is-active` is the only state, so a C# controller can drive the same markup by flipping the class.
 
 ## Toggles, checks, radios
 
